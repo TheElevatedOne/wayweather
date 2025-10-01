@@ -60,12 +60,10 @@ EXAMPLES:
 - jq
 - tombl
 
-1. Cloning
-
-- Clone the repo via `git clone https://github.com/TheElevatedOne/wayweather.git`
-- Use the script in that directory
-
-2. AUR (Planned)
+1. **Cloning**
+    - Clone the repo via `git clone https://github.com/TheElevatedOne/wayweather.git`
+    - Use the script in that directory
+2. **AUR** (Planned)
 
 ## Waybar Module
 
