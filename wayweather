@@ -1,0 +1,366 @@
+#!/usr/bin/env bash
+
+make_conf() {
+  CONF_PATH="$HOME/.config/wayweather/"
+  CONF_FILE="config.toml"
+
+  mkdir -p "$CONF_PATH"
+  touch "$CONF_PATH$CONF_FILE"
+  echo '# WayWeather config
+# ip_loc enables/disables autolocation through ip address
+# latitide, longitude, city and country must be set when ip_loc is false
+# units can be either "imp" or "met" (imperial and metric)
+
+[wayweather]
+ip_loc = true
+latitude = 0
+longitude = 0
+city = ""
+country = ""
+units = "met"' >"$CONF_PATH$CONF_FILE"
+}
+
+read_conf() {
+  # Reading toml config
+  declare -A CONF
+  CONF_PATH="$HOME/.config/wayweather/config.toml"
+
+  if [ ! -f "$CONF_PATH" ]; then
+    make_conf
+    # Create config if it does not exist
+  fi
+
+  eval "$(tombl -e config=wayweather "$CONF_PATH")"
+  if [ "${config[ip_loc]}" = "true" ]; then
+    LOC=$(curl http://ip-api.com/json?fields=lat,lon,city,country -s | jq -c)
+    CONF=(
+      ["LAT"]="$(echo "$LOC" | jq -r '.lat' | awk '{printf "%.2f",$1}')"
+      ["LONG"]="$(echo "$LOC" | jq -r '.lon' | awk '{printf "%.2f",$1}')"
+      ["CITY"]="$(echo "$LOC" | jq -r '.city')"
+      ["COUNTRY"]="$(echo "$LOC" | jq -r '.country')"
+      ["UNITS"]="${config[units]}"
+    )
+  else
+    CONF=(
+      ["LAT"]="${config[latitude]}"
+      ["LONG"]="${config[longitude]}"
+      ["CITY"]="${config[city]}"
+      ["COUNTRY"]="${config[country]}"
+      ["UNITS"]="${config[units]}"
+    )
+  fi
+
+  printf "%s " "${CONF[@]@K}"
+}
+
+write_conf() {
+  declare -A CONF
+  CONF_PATH="$HOME/.config/wayweather/config.toml"
+
+  if [ ! -f "$CONF_PATH" ]; then
+    make_conf
+    # Create config if it does not exist
+  fi
+
+  case $1 in
+  set)
+    eval "$(tombl -e config=wayweather "$CONF_PATH")"
+    for i in "$@"; do
+      case $i in
+      lat=*)
+        LAT="${i#*=}"
+        ;;
+      long=*)
+        LONG="${i#*=}"
+        ;;
+      country=*)
+        COUNTRY="${i#*=}"
+        ;;
+      city=*)
+        CITY="${i#*=}"
+        ;;
+      units=*)
+        UNITS="${i#*=}"
+        ;;
+      esac
+    done
+    if ! [[ -v LAT ]] && ! [[ -v LONG ]] && ! [[ -v COUNTRY ]] && ! [[ -v CITY ]]; then
+      if [[ "${config[latitide]}" == "0" ]] && [[ "${config[longitude]}" == "0" ]] && [[ "${config[country]}" == "" ]] && [[ "${config[city]}" == "" ]]; then
+        LOCAT="true"
+      else
+        LOCAT="false"
+      fi
+    else
+      LOCAT="false"
+    fi
+
+    if ! [[ -v LAT ]]; then
+      LAT="${config[latitude]}"
+    fi
+    if ! [[ -v LONG ]]; then
+      LONG="${config[longitude]}"
+    fi
+    if ! [[ -v COUNTRY ]]; then
+      COUNTRY="${config[country]}"
+    fi
+    if ! [[ -v CITY ]]; then
+      CITY="${config[city]}"
+    fi
+    if ! [[ -v UNITS ]]; then
+      UNITS="${config[units]}"
+    fi
+    echo "# WayWeather config
+# ip_loc enables/disables autolocation through ip address
+# latitide, longitude, city and country must be set when ip_loc is false
+# units can be either \"imp\" or \"met\" (imperial and metric)
+
+[wayweather]
+ip_loc = $LOCAT
+latitude = $LAT
+longitude = $LONG
+city = \"$CITY\"
+country = \"$COUNTRY\"
+units = \"$UNITS\"" >"$CONF_PATH"
+    ;;
+  reset)
+    eval "$(tombl -e config=wayweather "$CONF_PATH")"
+    echo "# WayWeather config
+# ip_loc enables/disables autolocation through ip address
+# latitide, longitude, city and country must be set when ip_loc is false
+# units can be either \"imp\" or \"met\" (imperial and metric)
+
+[wayweather]
+ip_loc = true
+latitude = 0
+longitude = 0
+city = \"\"
+country = \"\"
+units = \"${config[units]}\"" >"$CONF_PATH"
+    ;;
+  esac
+}
+
+api_pull() {
+  LAT="$1"
+  LONG="$2"
+  CITY="$3"
+  COUNTRY="$4"
+  UNITS="$5"
+
+  case $UNITS in
+  imp)
+    TEMP_U="&temperature_unit=fahrenheit"
+    WIND_U="&wind_speed_unit=mph"
+    PREC_U="&precipitation_unit=inch"
+    ;;
+  met)
+    TEMP_U=""
+    WIND_U=""
+    PREC_U=""
+    ;;
+  esac
+
+  WTHR_API=$(curl -s "https://api.open-meteo.com/v1/forecast?latitude=$LAT&longitude=$LONG&current=temperature_2m,relative_humidity_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,weather_code&timezone=auto$TEMP_U$WIND_U$PREC_U" | jq -c)
+
+  TIME="$(echo "$WTHR_API" | jq -r '.current.time' | awk '{split($1, time, "T"); printf "%s %s",time[1],time[2]}')"
+  TEMP="$(echo "$WTHR_API" | jq -r '.current.temperature_2m')$(echo "$WTHR_API" | jq -r '.current_units.temperature_2m')"
+  HUMID="$(echo "$WTHR_API" | jq -r '.current.relative_humidity_2m')%"
+  PREC="$(echo "$WTHR_API" | jq -r '.current.precipitation' | awk '{printf "%.2f",$1}') $(echo "$WTHR_API" | jq -r '.current_units.precipitation')"
+  CLOUD="$(echo "$WTHR_API" | jq -r '.current.cloud_cover')%"
+  WIND_S="$(echo "$WTHR_API" | jq -r '.current.wind_speed_10m') $(echo "$WTHR_API" | jq -r '.current_units.wind_speed_10m' | awk '{if ($1 == "mp/h") {print "mph"} else {print $1}}')"
+  WIND_G="$(echo "$WTHR_API" | jq -r '.current.wind_gusts_10m') $(echo "$WTHR_API" | jq -r '.current_units.wind_gusts_10m' | awk '{if ($1 == "mp/h") {print "mph"} else {print $1}}')"
+
+  WIND_ARR=(
+    "North"
+    "North East"
+    "East"
+    "South East"
+    "South"
+    "South West"
+    "West"
+    "North West"
+  )
+  WIND_DIR="$(echo "$WTHR_API" | jq -r '.current.wind_direction_10m')"
+  WIND_DIR_LET="${WIND_ARR[$(echo "$WIND_DIR" | awk '{print int(($1 / 45) % 8 )}')]}"
+
+  IS_DAY="$(echo "$WTHR_API" | jq -r '.current.is_day')"
+  WC="$(echo "$WTHR_API" | jq -r '.current.weather_code')"
+
+  declare -A WC_LIST
+
+  WC_LIST=(
+    ["0_0"]="󰖔 "
+    ["0_1"]="󰖙 "
+    ["1_0"]="󰖔 "
+    ["1_1"]="󰖙 "
+    ["2"]="󰖐 "
+    ["3"]="󰖐 "
+    ["45"]="󰖑 "
+    ["48"]="󰖑 "
+    ["51"]="󰖗 "
+    ["53"]="󰖗 "
+    ["55"]="󰖗 "
+    ["56"]="󰙿 "
+    ["57"]="󰙿 "
+    ["61"]="󰖖 "
+    ["63"]="󰖖 "
+    ["65"]="󰖖 "
+    ["66"]="󰙿 "
+    ["67"]="󰙿 "
+    ["71"]="󰖘 "
+    ["73"]="󰖘 "
+    ["75"]="󰼶 "
+    ["77"]="󰖒 "
+    ["80"]="󰖖 "
+    ["81"]="󰖖 "
+    ["82"]="󰖖 "
+    ["85"]="󰼶 "
+    ["86"]="󰼶 "
+    ["95"]="󰖓 "
+    ["96"]="󰖓 "
+    ["99"]="󰖓 "
+  )
+
+  WI="${WC_LIST["$(echo "$WC $IS_DAY" | awk '{if ($1 <= 1) {printf "%s_%s",$1,$2} else {printf "%s",$1}}')"]}"
+
+  declare -A WTHR
+
+  WTHR=(
+    ["CITY"]=$CITY
+    ["COUNTRY"]=$COUNTRY
+    ["TIME"]=$TIME
+    ["TEMP"]=$TEMP
+    ["HUMID"]=$HUMID
+    ["PREC"]=$PREC
+    ["CLOUD"]=$CLOUD
+    ["WIND_S"]=$WIND_S
+    ["WIND_G"]=$WIND_G
+    ["WIND_DIR"]="$WIND_DIR_LET ($WIND_DIR°)"
+    ["WI"]=$WI
+  )
+
+  printf "%s " "${WTHR[@]@K}"
+}
+
+show_help() {
+  echo '> wayweather [-h/--help] [--get] [--set] [--reset] [--print]
+
+Weather script for Waybar with IP Geolocation
+
+OPTIONS:
+    -h, --help      Print help information
+    --get           Pring waybar json input
+    --set <ARGS>    Set custom location and
+                    print waybar json input
+    --reset         Reset custom location to
+                    IP geolocation
+    --print         Print waybar result to stdout
+
+ARGS:
+  Arguments for setting custom location
+  Enclose in double quotes (") for expected result
+
+  INFO: Aruments --lat, --long, --city, --country must
+  be used together, --units may be used separately
+
+    --lat=LATITUDE      Latitude in decimal format
+                        with two decimal places
+    --long=LONGITUDE    Longitude in decimal format
+                        with two decimal places
+    --city=CITY         City name
+    --country=COUNTRY   Country name
+    --units=UNITS       Either "met" or "imp" for
+                        metric and imperial units
+
+EXAMPLES:
+  
+  > wayweather --set --lat="40.71" --long="-74.01" --city="New York" --country="USA"
+  
+  > wayweather --get
+  {"text":"71.1°F <big>󰖔 </big>","tooltip":"New York, USA\nTime: 2025-09-30 19:45\n\n
+  Temperature: 71.1°F\nHumidity: 53%\nPrecipitaion: 0.00 inch\nCloud Cover: 19%\n
+  Wind Direct: North West (356°)\nWind Speed: 6.3 mph\nWind Gusts: 15.2 mph"}'
+}
+
+case $1 in
+"-h" | "--help")
+  show_help
+  ;;
+"--get")
+  declare -A CONFIG="($(read_conf))"
+  declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
+  echo "{'text': '${WTHR_ARR["TEMP"]} <big>${WTHR_ARR["WI"]}</big>'\
+,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
+\n\nTemperature: ${WTHR_ARR["TEMP"]}\nHumidity: ${WTHR_ARR["HUMID"]}\nPrecipitaion: ${WTHR_ARR["PREC"]}\
+\nCloud Cover: ${WTHR_ARR["CLOUD"]}\nWind Direct: ${WTHR_ARR["WIND_DIR"]}\nWind Speed: ${WTHR_ARR["WIND_S"]}\nWind Gusts: ${WTHR_ARR["WIND_G"]}'}" | sed -e "s/'/\"/g" | jq -c
+  ;;
+"--set")
+  for i in "$@"; do
+    case $i in
+    --set) ;;
+    --lat=*)
+      LAT="${i#*=}"
+      ;;
+    --long=*)
+      LONG="${i#*=}"
+      ;;
+    --city=*)
+      CITY="${i#*=}"
+      ;;
+    --country=*)
+      COUNTRY="${i#*=}"
+      ;;
+    --units=*)
+      UNITS="${i#*=}"
+      ;;
+    esac
+  done
+
+  if [[ -v LAT ]] && [[ -v LONG ]] && [[ -v COUNTRY ]] && [[ -v CITY ]]; then
+    if [[ "$LAT" != "" ]] && [[ "$LONG" != "" ]] && [[ "$COUNTRY" != "" ]] && [[ "$CITY" != "" ]] && [[ "$UNITS" != "" ]]; then
+      write_conf set "lat=$LAT" "long=$LONG" "country=$COUNTRY" "city=$CITY" "units=$UNITS"
+    elif [[ "$LAT" != "" ]] && [[ "$LONG" != "" ]] && [[ "$COUNTRY" != "" ]] && [[ "$CITY" != "" ]]; then
+      write_conf set "lat=$LAT" "long=$LONG" "country=$COUNTRY" "city=$CITY"
+    else
+      echo "[ERROR] Arguments Empty"
+      exit 1
+    fi
+  elif [[ -v UNITS ]]; then
+    if [[ "$UNITS" != "" ]]; then
+      write_conf set "units=$UNITS"
+    else
+      echo "[ERROR] Arguments Empty"
+      exit 1
+    fi
+  else
+    echo "[ERROR] Missing Arguments"
+    exit 1
+  fi
+
+  ;;
+"--reset")
+  write_conf reset
+  ;;
+"--print")
+  declare -A CONFIG="($(read_conf))"
+  declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
+  echo "TEXT:
+${WTHR_ARR["TEMP"]} ${WTHR_ARR["WI"]}
+
+TOOLTIP:
+${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}
+Time: ${WTHR_ARR["TIME"]}
+
+Temperature: ${WTHR_ARR["TEMP"]}
+Humidity: ${WTHR_ARR["HUMID"]}
+Precipitaion: ${WTHR_ARR["PREC"]}
+Cloud Cover: ${WTHR_ARR["CLOUD"]}
+Wind Direct: ${WTHR_ARR["WIND_DIR"]}
+Wind Speed: ${WTHR_ARR["WIND_S"]}
+Wind Gusts: ${WTHR_ARR["WIND_G"]}"
+  ;;
+*)
+  echo -e "Invalid Input, Showing Help Message\n"
+  show_help
+  ;;
+esac
