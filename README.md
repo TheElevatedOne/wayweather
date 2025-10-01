@@ -99,8 +99,8 @@ units = "met"
 ```
 
 - ip_loc - can be `true` or `false`, when setting location with `--set` it auto-disables itself
-- latitide - a number in decimal coordinate format rounded to two digits
-- longitude - a number in decimal coordinate format rounded to two digits
+- latitide & longitude - numbers in decimal coordinate format rounded to two digits
+  - get them from [https://www.gps-coordinates.net/](https://www.gps-coordinates.net/) (ex.)
 - city - city name
 - country - country name
 - units - either `met` or `imp` for metric and imperial
