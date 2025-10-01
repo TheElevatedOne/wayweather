@@ -59,6 +59,7 @@ EXAMPLES:
 - awk
 - jq
 - tombl
+- font from [nerdfonts](https://www.nerdfonts.com/font-downloads) or a [patched font](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-patcher)
 
 1. **Cloning**
     - Clone the repo via `git clone https://github.com/TheElevatedOne/wayweather.git`
