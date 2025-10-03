@@ -2,6 +2,8 @@
 
 Custom Weather Script for Waybar with IP Geolocation
 
+[![AUR Version](https://img.shields.io/aur/version/wayweather?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/wayweather)
+
 ## Sections
 
 - [**USAGE**](#usage)
@@ -64,7 +66,9 @@ EXAMPLES:
 1. **Cloning**
     - Clone the repo via `git clone https://github.com/TheElevatedOne/wayweather.git`
     - Use the script in that directory
-2. **AUR** (Planned)
+2. **AUR**
+    - [wayweather](https://aur.archlinux.org/packages/wayweather)
+    - `yay -S wayweather`, `paru -S wayweather`, etc.
 
 ## Waybar Module
 
