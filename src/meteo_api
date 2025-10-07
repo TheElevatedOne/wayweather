@@ -104,3 +104,38 @@ api_pull() {
 
   printf "%s " "${WTHR[@]@K}"
 }
+
+daemon() {
+  SAVE_PATH="$HOME/.config/wayweather/locations.json"
+  CONF_PATH="$HOME/.config/wayweather/config.toml"
+  declare -A HISTORY
+
+  while true; do
+    declare -A CONFIG="($(read_conf))"
+    declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
+
+    for i in "$@"; do
+      case $i in
+      no-icon)
+        NO_ICON=true
+        ;;
+      esac
+    done
+
+    ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
+
+    echo "{'text': '${WTHR_ARR["TEMP"]}$ICON'\
+,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
+\n\nTemperature: ${WTHR_ARR["TEMP"]}\nHumidity: ${WTHR_ARR["HUMID"]}\nPrecipitaion: ${WTHR_ARR["PREC"]}\
+\nCloud Cover: ${WTHR_ARR["CLOUD"]}\nWind Direct: ${WTHR_ARR["WIND_DIR"]}\nWind Speed: ${WTHR_ARR["WIND_S"]}\nWind Gusts: ${WTHR_ARR["WIND_G"]}'}" | sed -e "s/'/\"/g" | jq -c
+
+    while true; do
+      sleep 5s
+      for i in $(seq 0 4); do
+        if [[ "$(($(date +"%M") - $((15 * i))))" == "0" ]]; then
+          break
+        fi
+      done
+    done
+  done
+}

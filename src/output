@@ -12,7 +12,7 @@ show_help() {
       echo '> wayweather [-h/--help] [-h/--help]
 
 Not enough help? To wiki you go:
-https://github.com/TheElevatedOne/wayweather/wiki/WayWeather-Wiki'
+https://github.com/TheElevatedOne/wayweather/wiki'
       exit 0
       ;;
     main)
@@ -24,7 +24,7 @@ HELP:
     -h, --help            Print main help information
     <OPTION> -h, --help   Print help information about
                           an option
-      Example: > wayweather --get --help
+    Example: > wayweather --get --help
 
 OPTIONS:
     -g, --get [--no-icon]   Pring waybar json input
@@ -36,8 +36,8 @@ OPTIONS:
     -l, --load [default]    Select locations from saved ones
     -sd, --set-default      Set default location for faster
                             loading
-    -d, --delete            Delete locations from saved ones
-    -w, --daemon            Runs a while loop for waybar
+    -d, --delete   [WIP]    Delete locations from saved ones
+    -w, --daemon   [WIP]    Runs a while loop for waybar
                             for faster updating without
                             polling the API'
       ;;
@@ -130,6 +130,19 @@ OPTIONS:
 Prints the waybar result to stdout in a human
 readable format.
 For testing purposes."
+      exit 0
+      ;;
+    set-default)
+      echo '> wayweather [-sd/--set-default]
+
+Lets you set a default location from
+saved ones. Useful for "--load default"'
+      exit 0
+      ;;
+    delete)
+      exit 0
+      ;;
+    daemon)
       exit 0
       ;;
     esac

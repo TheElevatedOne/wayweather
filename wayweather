@@ -12,7 +12,9 @@ case $1 in
   for i in "$@"; do
     case $i in
     -h | --help)
-      show_help help
+      if [[ "$@" == "--help --help" ]] || [[ "$@" == "--help -h" ]] || [[ "$@" == "-h --help" ]] || [[ "$@" == "-h -h" ]]; then
+        show_help help
+      fi
       ;;
     esac
   done
@@ -126,9 +128,41 @@ case $1 in
   done
   term_return "$(if $NO_ICON; then echo "no-icon"; else echo ""; fi)"
   ;;
--sd | --set-default) ;;
--d | --delete) ;;
--w | --daemon) ;;
+-sd | --set-default)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help set-default
+      ;;
+    esac
+  done
+  default_loc
+  ;;
+-d | --delete)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help delete
+      ;;
+    esac
+  done
+  ;;
+# -w | --daemon)
+#   for i in "$@"; do
+#     case $i in
+#     -h | --help)
+#       show_help set-daemon
+#       ;;
+#     --no-icon)
+#       NO_ICON=true
+#       ;;
+#     --location)
+#       LOCATION="${i#*=}"
+#       ;;
+#     esac
+#   done
+#   daemon "$(if $NO_ICON; then echo "no-icon"; else echo ""; fi)"
+#   ;;
 *)
   echo -e "[ERROR] Invalid Input, Showing Help Message\n"
   show_help main
