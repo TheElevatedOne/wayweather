@@ -50,6 +50,7 @@ OPTIONS:
 
 **Required Packages:**
 
+- bash
 - curl
 - awk
 - jq
