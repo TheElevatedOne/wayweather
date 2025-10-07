@@ -164,3 +164,18 @@ $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].co
   unset JSON
   unset DEFAULT
 }
+
+list_loc() {
+  make_loc
+  SAVE_PATH="$HOME/.config/wayweather/locations.json"
+  JSON="$(cat "$SAVE_PATH" | jq -c)"
+
+  for index in $(seq 0 "$(($(echo "$JSON" | jq length) - 1))"); do
+    UNITS="$(if [[ $(echo "$JSON" | jq ".[\"$index\"].units") == '"met"' ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)"
+    echo "[$index]\
+$(if [[ "$(echo "$JSON" | jq ".[\"$index\"].default")" == "true" ]]; then echo "*"; else echo ""; fi) \
+$(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].country") \
+($(echo "$JSON" | jq ".[\"$index\"].latitude"), $(echo "$JSON" | jq ".[\"$index\"].longitude")) \
+[$UNITS]" | sed -e 's/"//g'
+  done
+}

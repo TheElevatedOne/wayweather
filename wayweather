@@ -115,6 +115,16 @@ case $1 in
   done
   load_loc "$DEF"
   ;;
+--list)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help list
+      ;;
+    esac
+  done
+  list_loc
+  ;;
 -p | --print)
   for i in "$@"; do
     case $i in

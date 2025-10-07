@@ -34,6 +34,7 @@ OPTIONS:
                             IP geolocation
     -p, --print [--no-icon] Print waybar result to stdout
     -l, --load [default]    Select locations from saved ones
+        --list              List saved locations
     -sd, --set-default      Set default location for faster
                             loading
     -d, --delete   [WIP]    Delete locations from saved ones
@@ -143,6 +144,13 @@ saved ones. Useful for "--load default"'
       exit 0
       ;;
     daemon)
+      exit 0
+      ;;
+    list)
+      echo "> wayweather [--list]
+
+Lists saved locations.
+Borrows code from --load."
       exit 0
       ;;
     esac
