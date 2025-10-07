@@ -4,15 +4,15 @@
 # Writing file with Custom Locations
 
 make_loc() {
-  #
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   if [ ! -f "$SAVE_PATH" ]; then
     printf "{}" >"$SAVE_PATH"
+    echo "[LOG] Created Custom Locations File"
   fi
-  echo "[LOG] Created Custom Locations File"
 }
 
 load_loc() {
+  make_loc
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   JSON="$(cat "$SAVE_PATH" | jq -c)"
   DEFAULT=false
@@ -79,6 +79,7 @@ $(echo "$JSON" | jq ".[\"$INPUT\"].city"), $(echo "$JSON" | jq ".[\"$INPUT\"].co
 }
 
 write_loc() {
+  make_loc
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
 
   for i in "$@"; do
@@ -123,6 +124,7 @@ write_loc() {
 }
 
 default_loc() {
+  make_loc
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   JSON="$(cat "$SAVE_PATH" | jq -c)"
   DEFAULT=""

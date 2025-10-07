@@ -1,6 +1,9 @@
-# wayweather
+# WayWeather
 
-Custom Weather Script for Waybar with IP Geolocation
+Custom Weather Script for Waybar with IP Geolocation,
+Custom Locations, Default Locations and many more things.
+
+It got out of the original scope the more I worked on it xd.
 
 [![AUR Version](https://img.shields.io/aur/version/wayweather?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/wayweather)
 
@@ -14,43 +17,30 @@ Custom Weather Script for Waybar with IP Geolocation
 ## Usage
 
 ```
-> wayweather [-h/--help] [--get] [--set] [--reset] [--print]
+> wayweather [-h/--help] [OPTIONS]
 
 Weather script for Waybar with IP Geolocation
 
+HELP:
+    -h, --help            Print main help information
+    <OPTION> -h, --help   Print help information about
+                          an option
+    Example: > wayweather --get --help
+
 OPTIONS:
-    -h, --help      Print help information
-    --get           Pring waybar json input
-    --set <ARGS>    Set custom location and
-                    print waybar json input
-    --reset         Reset custom location to
-                    IP geolocation
-    --print         Print waybar result to stdout
-
-ARGS:
-  Arguments for setting custom location
-  Enclose in double quotes (") for expected result
-
-  INFO: Aruments --lat, --long, --city, --country must
-  be used together, --units may be used separately
-
-    --lat=LATITUDE      Latitude in decimal format
-                        with two decimal places
-    --long=LONGITUDE    Longitude in decimal format
-                        with two decimal places
-    --city=CITY         City name
-    --country=COUNTRY   Country name
-    --units=UNITS       Either "met" or "imp" for
-                        metric and imperial units
-
-EXAMPLES:
-  
-  > wayweather --set --lat="40.71" --long="-74.01" --city="New York" --country="USA"
-  
-  > wayweather --get
-  {"text":"71.1°F <big>󰖔 </big>","tooltip":"New York, USA\nTime: 2025-09-30 19:45\n\n
-  Temperature: 71.1°F\nHumidity: 53%\nPrecipitaion: 0.00 inch\nCloud Cover: 19%\n
-  Wind Direct: North West (356°)\nWind Speed: 6.3 mph\nWind Gusts: 15.2 mph"}
+    -g, --get [--no-icon]   Pring waybar json input
+    -s, --set <ARGS>        Set custom location and
+                            print waybar json input
+    -r, --reset [--units]   Reset custom location to
+                            IP geolocation
+    -p, --print [--no-icon] Print waybar result to stdout
+    -l, --load [default]    Select locations from saved ones
+    -sd, --set-default      Set default location for faster
+                            loading
+    -d, --delete   [WIP]    Delete locations from saved ones
+    -w, --daemon   [WIP]    Runs a while loop for waybar
+                            for faster updating without
+                            polling the API
 ```
 
 ## Installation
@@ -110,3 +100,26 @@ units = "met"
 - units - either `met` or `imp` for metric and imperial
   - `met` - °C, mm, km/h
   - `imp` - °F, inch, mph
+
+The saved locations are at `$HOME/.config/wayweather/locations.json`
+and will be created when saving locations.
+
+```json
+{
+  "0": {
+    "latitude": 40.71,
+    "longitude": -74.01,
+    "city": "New York",
+    "country": "USA",
+    "units": "imp",
+    "default": false
+  },
+  "1": {
+  ...
+  },
+  ...
+}
+```
+
+- has a similar structure to the config but supports saviing multiple locations
+- also supports setting a default location
