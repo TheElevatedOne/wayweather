@@ -53,7 +53,7 @@ OPTIONS:
 - curl
 - awk
 - jq
-- tombl
+- [tombl](https://github.com/snyball/tombl)
 - font from [nerdfonts](https://www.nerdfonts.com/font-downloads) or a [patched font](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-patcher)
 
 1. **Cloning**
