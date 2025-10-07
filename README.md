@@ -35,6 +35,7 @@ OPTIONS:
                             IP geolocation
     -p, --print [--no-icon] Print waybar result to stdout
     -l, --load [default]    Select locations from saved ones
+        --list              List saved locations
     -sd, --set-default      Set default location for faster
                             loading
     -d, --delete   [WIP]    Delete locations from saved ones
@@ -42,6 +43,8 @@ OPTIONS:
                             for faster updating without
                             polling the API
 ```
+
+### For more information, go over to the [Wiki](https://github.com/TheElevatedOne/wayweather/wiki)
 
 ## Installation
 
