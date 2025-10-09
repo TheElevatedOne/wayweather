@@ -33,6 +33,19 @@ case $1 in
 -v | --version)
   waybar_return "$(if [[ -v NO_ICON ]]; then echo "no-icon"; else echo ""; fi)"
   ;;
+-g | --get)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help print
+      ;;
+    --no-icon)
+      NO_ICON=true
+      ;;
+    esac
+  done
+  waybar_return "$(if [[ -v NO_ICON ]]; then echo "no-icon"; else echo ""; fi)"
+  ;;
 -s | --set)
   for i in "$@"; do
     case $i in

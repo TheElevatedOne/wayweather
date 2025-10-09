@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## wayweather 2.1.1
+
+- Fixed a self created issue
+
 ## wayweather 2.1.0
 
 - Finally fix the icon issue
