@@ -69,7 +69,7 @@ OPTIONS:
 
 1. Using static loading
 
-- ```jsonc
+    - ```jsonc
       "custom/wayweather": {
         "format": "{text}",
         "interval": 900,
@@ -80,12 +80,12 @@ OPTIONS:
 
 2. Using wayweather Daemon
 
-- ```jsonc
-      custom/wayweather: {
-        format: {text},
-        exec: path/to/wayweather --daemon,
-        return-type: json,
-        restart-interval: 5
+    - ```jsonc
+      "custom/wayweather": {
+        "format": "{text}",
+        "exec": "path/to/wayweather --daemon",
+        "return-type": "json",
+        "restart-interval": 5
       },
       ```
 
