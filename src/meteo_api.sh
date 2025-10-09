@@ -126,7 +126,7 @@ daemon() {
           fi
         done
         if $ID; then
-          load_loc "$LOCATION"
+          load_loc "$LOCATION" >>/dev/null
         fi
       fi
       ;;
@@ -144,8 +144,8 @@ daemon() {
     HISTORY["2"]="NONE"
     UPDATE=false
 
-    declare -A CONFIG="($(read_conf))"
-    declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
+    declare -A CONFIG="($(read_conf 2>/dev/null))"
+    declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}" 2>/dev/null))"
 
     ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
