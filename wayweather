@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+LIBS_DIR="$SCRIPT_DIR/src"
+if ! [[ -d "$LIBS_DIR" ]]; then
+  LIBS_DIR="/usr/lib/wayweather"
+fi
+if ! [[ -d "$LIBS_DIR" ]]; then
+  echo "[ERROR] Libraries are missing, cannot continue"
+  echo "[INFO] Reinstall/Redownload wayweather"
+  exit 1
+fi
 
-source "$SCRIPT_DIR/src/config"
-source "$SCRIPT_DIR/src/locations"
-source "$SCRIPT_DIR/src/output"
-source "$SCRIPT_DIR/src/meteo_api"
+source "$LIBS_DIR/config.sh"
+source "$LIBS_DIR/locations.sh"
+source "$LIBS_DIR/output.sh"
+source "$LIBS_DIR/meteo_api.sh"
+source "$LIBS_DIR/version"
 
 case $1 in
 -h | --help)
@@ -19,6 +29,16 @@ case $1 in
     esac
   done
   show_help main
+  ;;
+-v | --version)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help version
+      ;;
+    esac
+  done
+  echo "wayweather $VERSION"
   ;;
 -g | --get)
   for i in "$@"; do
@@ -111,9 +131,14 @@ case $1 in
     default)
       DEF="default"
       ;;
+    *)
+      if [[ "$i" =~ ^[0-9]+$ ]]; then
+        ID="$i"
+      fi
+      ;;
     esac
   done
-  load_loc "$DEF"
+  load_loc "$DEF" "$ID"
   ;;
 --list)
   for i in "$@"; do
@@ -154,25 +179,38 @@ case $1 in
     -h | --help)
       show_help delete
       ;;
+    -y | --yes)
+      NOCONFIRM=true
+      ;;
+    *)
+      if [[ "$i" =~ ^[0-9]+$ ]]; then
+        DEL_NUM=true
+        LOCATION_ID="$i"
+      fi
+      ;;
     esac
   done
+  delete_loc "$(if [[ -v DEL_NUM ]]; then echo "$LOCATION_ID"; else echo ""; fi)" "$(if [[ -v NOCONFIRM ]]; then echo "yes"; else echo ""; fi)"
   ;;
-# -w | --daemon)
-#   for i in "$@"; do
-#     case $i in
-#     -h | --help)
-#       show_help set-daemon
-#       ;;
-#     --no-icon)
-#       NO_ICON=true
-#       ;;
-#     --location)
-#       LOCATION="${i#*=}"
-#       ;;
-#     esac
-#   done
-#   daemon "$(if $NO_ICON; then echo "no-icon"; else echo ""; fi)"
-#   ;;
+-w | --daemon)
+  for i in "$@"; do
+    case $i in
+    -h | --help)
+      show_help set-daemon
+      ;;
+    --no-icon)
+      NO_ICON=true
+      ;;
+    --location=*)
+      LOCATION="${i#*=}"
+      ;;
+    --timer=*)
+      TIMER="${i#*=}"
+      ;;
+    esac
+  done
+  daemon "$(if $NO_ICON; then echo "no-icon"; else echo ""; fi)" "$(if [[ -v LOCATION ]]; then echo "location=$LOCATION"; else echo ""; fi)" "$(if [[ -v TIMER ]]; then echo "timer=$TIMER"; else echo ""; fi)"
+  ;;
 *)
   echo -e "[ERROR] Invalid Input, Showing Help Message\n"
   show_help main

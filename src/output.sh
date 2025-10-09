@@ -22,6 +22,7 @@ Weather script for Waybar with IP Geolocation
 
 HELP:
     -h, --help            Print main help information
+    -v, --version         Prints the version
     <OPTION> -h, --help   Print help information about
                           an option
     Example: > wayweather --get --help
@@ -33,14 +34,20 @@ OPTIONS:
     -r, --reset [--units]   Reset custom location to
                             IP geolocation
     -p, --print [--no-icon] Print waybar result to stdout
-    -l, --load [default]    Select locations from saved ones
+    -l, --load [OPTIONS]    Select locations from saved ones
         --list              List saved locations
     -sd, --set-default      Set default location for faster
                             loading
-    -d, --delete   [WIP]    Delete locations from saved ones
-    -w, --daemon   [WIP]    Runs a while loop for waybar
-                            for faster updating without
-                            polling the API'
+    -d, --delete [OPTIONS]  Delete locations from saved ones
+    -w, --daemon [OPTIONS]  Runs a loop for checking config
+                            changes prints waybar json when
+                            a change occurs'
+      ;;
+    version)
+      echo "> wayweather [-v/--version]
+
+Prints the script's version."
+      exit 0
       ;;
     get)
       echo '> wayweather [-g/--get] [--no-icon]
@@ -111,14 +118,18 @@ units, unless specified.'
       echo '> wayweather [-l/--load] [default]
 
 OPTIONS:
-  default        Just the string "default".
-                 Loads the default Custom Location.
+  default        Just the string "default"
+                 Loads the default Custom Location
+  ID             Expects a number (ID) of a saved
+                 location
+                 Get locations with --list
 
 Loads Custom Locations from the locations file. If there
 is more than one saved location, a selector will appear,
 otherwise the location will be selected automatically.
 When using "default", it will load the default location,
-set with -sd/--set-default'
+set with -sd/--set-default.
+ID and default cannot be used at the same time.'
       exit 0
       ;;
     print)
@@ -141,9 +152,42 @@ saved ones. Useful for "--load default"'
       exit 0
       ;;
     delete)
+      echo "> wayweather [-d/--delete] [OPTIONS]
+
+OPTIONS:
+  -y, --yes       Auto confirms deletion of a
+                  location
+  ID              Expects a location ID from --list
+                  Will delete specific location
+
+Deletes saved locations via either an argument (ID)
+or via a selection.
+By default, deleting requires a confirmation (Y/n).
+Adding argument --yes skips the confirmation and
+auto accepts it."
       exit 0
       ;;
     daemon)
+      echo "> wayweather [-w/--daemon] [OPTIONS]
+
+OPTIONS:
+  --no-icon       Disables the weather icon
+                  from NerdFonts
+  --location=NUM  Expects a location ID from --list
+                  Will load the location into
+                  config and use it
+  --timer=NUM     Expects the amount of seconds
+                  the daemon should wait before
+                  checking changes in config
+                  Default: 15, Recommended: 5 - 30
+
+Runs a loop with the same components as --get but
+checks changes in the config so the API is not
+polled every time.
+The check is done in three parts, so that is has
+redundancy and has a 15 minute timer for API
+updates.
+Returns a stream of waybar parsable JSON strings."
       exit 0
       ;;
     list)

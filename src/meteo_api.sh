@@ -108,19 +108,43 @@ api_pull() {
 daemon() {
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   CONF_PATH="$HOME/.config/wayweather/config.toml"
-  declare -A HISTORY
+  SLEEP="15"
+
+  for i in "$@"; do
+    case $i in
+    no-icon)
+      NO_ICON=true
+      ;;
+    location=*)
+      LOCATION="${i#*=}"
+      if [[ "$LOCATION" =~ ^[0-9]+$ ]]; then
+        ID=false
+        for key in $(cat "$SAVE_PATH" | jq -rc 'keys | @sh' | tr -d \'); do
+          if [[ "$LOCATION" -eq "$key" ]]; then
+            ID=true
+          fi
+        done
+        if $ID; then
+          load_loc "$LOCATION"
+        fi
+      fi
+      ;;
+    timer=*)
+      SLEEP="${i#*=}"
+      ;;
+    esac
+  done
 
   while true; do
+    unset HISTORY
+    declare -A HISTORY
+    HISTORY["0"]="NONE"
+    HISTORY["1"]="NONE"
+    HISTORY["2"]="NONE"
+    UPDATE=false
+
     declare -A CONFIG="($(read_conf))"
     declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
-
-    for i in "$@"; do
-      case $i in
-      no-icon)
-        NO_ICON=true
-        ;;
-      esac
-    done
 
     ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
@@ -130,12 +154,28 @@ daemon() {
 \nCloud Cover: ${WTHR_ARR["CLOUD"]}\nWind Direct: ${WTHR_ARR["WIND_DIR"]}\nWind Speed: ${WTHR_ARR["WIND_S"]}\nWind Gusts: ${WTHR_ARR["WIND_G"]}'}" | sed -e "s/'/\"/g" | jq -c
 
     while true; do
-      sleep 5s
+      HISTORY["0"]="$(cat "$CONF_PATH")"
+      if [[ "${HISTORY["1"]}" != "NONE" && "${HISTORY["2"]}" != "NONE" ]] && [[ "${HISTORY["0"]}" != "${HISTORY["1"]}" || "${HISTORY["0"]}" != "${HISTORY["2"]}" || "${HISTORY["1"]}" != "${HISTORY["2"]}" ]]; then
+        break
+      fi
+      sleep "$((SLEEP / 2))s"
+      HISTORY["1"]="$(cat "$CONF_PATH")"
+      if [[ "${HISTORY["2"]}" != "NONE" ]] && [[ "${HISTORY["0"]}" != "${HISTORY["1"]}" || "${HISTORY["0"]}" != "${HISTORY["2"]}" || "${HISTORY["1"]}" != "${HISTORY["2"]}" ]]; then
+        break
+      fi
+      sleep "$((SLEEP / 2))s"
+      HISTORY["2"]="$(cat "$CONF_PATH")"
+      if [[ "${HISTORY["0"]}" != "${HISTORY["1"]}" || "${HISTORY["0"]}" != "${HISTORY["2"]}" || "${HISTORY["1"]}" != "${HISTORY["2"]}" ]]; then
+        break
+      fi
       for i in $(seq 0 4); do
         if [[ "$(($(date +"%M") - $((15 * i))))" == "0" ]]; then
-          break
+          UPDATE=true
         fi
       done
+      if $UPDATE; then
+        break
+      fi
     done
   done
 }

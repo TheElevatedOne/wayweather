@@ -7,6 +7,9 @@
 - Refactor much of the code
 - Add Extra Help Arguments
 - Add Default Location Setting
+- Add Deleting Locations
+- Add Daemon
+- Add Version Checking
 
 ## wayweather 1.0.0
 

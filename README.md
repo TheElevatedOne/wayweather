@@ -23,6 +23,7 @@ Weather script for Waybar with IP Geolocation
 
 HELP:
     -h, --help            Print main help information
+    -v, --version         Prints the version
     <OPTION> -h, --help   Print help information about
                           an option
     Example: > wayweather --get --help
@@ -34,14 +35,14 @@ OPTIONS:
     -r, --reset [--units]   Reset custom location to
                             IP geolocation
     -p, --print [--no-icon] Print waybar result to stdout
-    -l, --load [default]    Select locations from saved ones
+    -l, --load [OPTIONS]    Select locations from saved ones
         --list              List saved locations
     -sd, --set-default      Set default location for faster
                             loading
-    -d, --delete   [WIP]    Delete locations from saved ones
-    -w, --daemon   [WIP]    Runs a while loop for waybar
-                            for faster updating without
-                            polling the API
+    -d, --delete [OPTIONS]  Delete locations from saved ones
+    -w, --daemon [OPTIONS]  Runs a loop for checking config
+                            changes prints waybar json when
+                            a change occurs
 ```
 
 ### For more information, go over to the [Wiki](https://github.com/TheElevatedOne/wayweather/wiki)
@@ -66,14 +67,27 @@ OPTIONS:
 
 ## Waybar Module
 
-```json
-  "custom/wayweather": {
-    "format": "{text}",
-    "interval": 900,
-    "exec": "path/to/wayweather --get",
-    "return-type": "json"
-  },
-```
+1. Using static loading
+
+- ```jsonc
+      "custom/wayweather": {
+        "format": "{text}",
+        "interval": 900,
+        "exec": "path/to/wayweather --get",
+        "return-type": "json"
+      },
+      ```
+
+2. Using wayweather Daemon
+
+- ```jsonc
+      custom/wayweather: {
+        format: {text},
+        exec: path/to/wayweather --daemon,
+        return-type: json,
+        restart-interval: 5
+      },
+      ```
 
 ## Config
 
