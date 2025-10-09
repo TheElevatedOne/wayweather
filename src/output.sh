@@ -9,59 +9,53 @@ show_help() {
   for i in "$@"; do
     case $i in
     help)
-      echo '> wayweather [-h/--help] [-h/--help]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-h/--help\033[0m] [\033[1;33m-h/--help\033[0m]
 
 Not enough help? To wiki you go:
 https://github.com/TheElevatedOne/wayweather/wiki'
       exit 0
       ;;
     main)
-      echo '> wayweather [-h/--help] [OPTIONS]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-h/--help\033[0m] [\033[1;32mOPTIONS\033[0m]
 
 Weather script for Waybar with IP Geolocation
 
-HELP:
-    -h, --help            Print main help information
-    -v, --version         Prints the version
-    <OPTION> -h, --help   Print help information about
+\033[1;32mHELP:\033[0m
+    \033[1;33m-h, --help\033[0m            Print main help information
+    \033[1;33m-v, --version\033[0m         Prints the version
+    \033[1;33m<OPTION> -h, --help\033[0m   Print help information about
                           an option
     Example: > wayweather --get --help
 
-OPTIONS:
-    -g, --get [--no-icon]   Pring waybar json input
-    -s, --set <ARGS>        Set custom location and
+\033[1;32mOPTIONS:\033[0m
+    \033[1;33m-g, --get\033[0m [--no-icon]   Pring waybar json input
+    \033[1;33m-s, --set\033[0m <ARGS>        Set custom location and
                             print waybar json input
-    -r, --reset [--units]   Reset custom location to
+    \033[1;33m-r, --reset\033[0m [--units]   Reset custom location to
                             IP geolocation
-    -p, --print [--no-icon] Print waybar result to stdout
-    -l, --load [OPTIONS]    Select locations from saved ones
-        --list              List saved locations
-    -sd, --set-default      Set default location for faster
+    \033[1;33m-p, --print\033[0m [--no-icon] Print waybar result to stdout
+    \033[1;33m-l, --load\033[0m [OPTIONS]    Select locations from saved ones
+        \033[1;33m--list\033[0m              List saved locations
+    \033[1;33m-sd, --set-default\033[0m      Set default location for faster
                             loading
-    -d, --delete [OPTIONS]  Delete locations from saved ones
-    -w, --daemon [OPTIONS]  Runs a loop for checking config
+    \033[1;33m-d, --delete\033[0m [OPTIONS]  Delete locations from saved ones
+    \033[1;33m-w, --daemon\033[0m [OPTIONS]  Runs a loop for checking config
                             changes prints waybar json when
                             a change occurs'
       ;;
-    version)
-      echo "> wayweather [-v/--version]
-
-Prints the script's version."
-      exit 0
-      ;;
     get)
-      echo '> wayweather [-g/--get] [--no-icon]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-g/--get\033[0m] [\033[1;33m--no-icon\033[0m]
 
-OPTIONS:
-  --no-icon    Return a waybar parsable
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33m--no-icon\033[0m    Return a waybar parsable
                json string withou a NerdFont
                icon
 
 Returns a compact JSON string for the waybar
 module. It is not human readable.
 Use with a restart interval.
-
-EXAMPLE:
+'
+      echo 'EXAMPLE:
   > wayweather --get
   {"text":"71.1°F <big>󰖔 </big>","tooltip":"New York, USA\nTime: 2025-09-30 19:45\n\n
   Temperature: 71.1°F\nHumidity: 53%\nPrecipitaion: 0.00 inch\nCloud Cover: 19%\n
@@ -69,30 +63,30 @@ EXAMPLE:
       exit 0
       ;;
     set)
-      echo '> wayweather [-s/--set] [OPTIONS]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-s/--set\033[0m] [\033[1;32mOPTIONS\033[0m]
 
-OPTIONS:
+\033[1;32mOPTIONS:\033[0m
   Arguments for setting custom location
   Enclose in double quotes (") for expected result
 
-  INFO: Aruments --lat, --long, --city, --country must
+  \033[36mINFO:\033[0m Aruments --lat, --long, --city, --country must
   be used together, --units may be used separately
 
-  INFO: When Saving a Custom Location, ALL arguments
+  \033[36mINFO:\033[0m When Saving a Custom Location, ALL arguments
   must be used. --skip-config is optional.
 
-    --lat=LATITUDE      Latitude in decimal format
+    \033[1;33m--lat=\033[0mLATITUDE      Latitude in decimal format
                         with two decimal places
-    --long=LONGITUDE    Longitude in decimal format
+    \033[1;33m--long=\033[0mLONGITUDE    Longitude in decimal format
                         with two decimal places
-    --city=CITY         City name
-    --country=COUNTRY   Country name
-    --units=UNITS       Either "met" or "imp" for
+    \033[1;33m--city=\033[0mCITY         City name
+    \033[1;33m--country=\033[0mCOUNTRY   Country name
+    \033[1;33m--units=\033[0mUNITS       Either "met" or "imp" for
                         metric and imperial units
-    --save              Save custom location for
+    \033[1;33m--save\033[0m              Save custom location for
                         future use. Use with all
                         setting arguments.
-    --skip-config       Skip config generation
+    \033[1;33m--skip-config\033[0m       Skip config generation
                         when saving custom location
 
 EXAMPLE:
@@ -102,10 +96,10 @@ EXAMPLE:
       exit 0
       ;;
     reset)
-      echo '> wayweather [-r/--reset] [-u/--units]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-r/--reset\033[0m [\033[1;33m-u/--units\033[0m]
 
-OPTIONS:
-  -u, --units      Reset units when reseting the location
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33m-u, --units\033[0m      Reset units when reseting the location
 
 When setting a location via wayweather, it is saved to
 the config file (at $HOME/.config/wayweather/config.toml).
@@ -115,12 +109,12 @@ units, unless specified.'
       exit 0
       ;;
     load)
-      echo '> wayweather [-l/--load] [default]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-l/--load\033[0m] [\033[1;33mdefault\033[0m]
 
-OPTIONS:
-  default        Just the string "default"
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33mdefault\033[0m        Just the string "default"
                  Loads the default Custom Location
-  ID             Expects a number (ID) of a saved
+  \033[1;33mID\033[0m             Expects a number (ID) of a saved
                  location
                  Get locations with --list
 
@@ -133,10 +127,10 @@ ID and default cannot be used at the same time.'
       exit 0
       ;;
     print)
-      echo "> wayweather [-p/--print] [--no-icon]
+      echo -e "> \033[1;31mwayweather\033[0m [\033[1;33m-p/--print\033[0m] [\033[1;33m--no-icon\033[0m]
 
-OPTIONS:
-  --no-icon       Disables the weather icon
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33m--no-icon\033[0m       Disables the weather icon
                   from NerdFonts
 
 Prints the waybar result to stdout in a human
@@ -145,19 +139,19 @@ For testing purposes."
       exit 0
       ;;
     set-default)
-      echo '> wayweather [-sd/--set-default]
+      echo -e '> \033[1;31mwayweather\033[0m [\033[1;33m-sd/--set-default\033[0m]
 
 Lets you set a default location from
 saved ones. Useful for "--load default"'
       exit 0
       ;;
     delete)
-      echo "> wayweather [-d/--delete] [OPTIONS]
+      echo -e "> \033[1;31mwayweather\033[0m [\033[1;33m-d/--delete\033[0m] [\033[1;32mOPTIONS\033[0m]
 
-OPTIONS:
-  -y, --yes       Auto confirms deletion of a
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33m-y, --yes\033[0m       Auto confirms deletion of a
                   location
-  ID              Expects a location ID from --list
+  \033[1;33mID\033[0m              Expects a location ID from --list
                   Will delete specific location
 
 Deletes saved locations via either an argument (ID)
@@ -168,15 +162,15 @@ auto accepts it."
       exit 0
       ;;
     daemon)
-      echo "> wayweather [-w/--daemon] [OPTIONS]
+      echo -e "> \033[1;31mwayweather\033[0m [\033[1;33m-w/--daemon\033[0m] [\033[1;33mOPTIONS\033[0m]
 
-OPTIONS:
-  --no-icon       Disables the weather icon
+\033[1;32mOPTIONS:\033[0m
+  \033[1;33m--no-icon\033[0m       Disables the weather icon
                   from NerdFonts
-  --location=NUM  Expects a location ID from --list
+  \033[1;33m--location=NUM\033[0m  Expects a location ID from --list
                   Will load the location into
                   config and use it
-  --timer=NUM     Expects the amount of seconds
+  \033[1;33m--timer=NUM\033[0m     Expects the amount of seconds
                   the daemon should wait before
                   checking changes in config
                   Default: 15, Recommended: 5 - 30
@@ -191,7 +185,7 @@ Returns a stream of waybar parsable JSON strings."
       exit 0
       ;;
     list)
-      echo "> wayweather [--list]
+      echo -e "> \033[1;31mwayweather\033[0m [\033[1;33m--list\033[0m]
 
 Lists saved locations.
 Borrows code from --load."
@@ -203,6 +197,7 @@ Borrows code from --load."
 
 waybar_return() {
   # Prints a json string that waybar can parse
+  NO_ICON=false
 
   declare -A CONFIG="($(read_conf))"
   declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
@@ -215,7 +210,7 @@ waybar_return() {
     esac
   done
 
-  ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
+  ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
   echo "{'text': '${WTHR_ARR["TEMP"]}$ICON'\
 ,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
@@ -226,6 +221,7 @@ waybar_return() {
 term_return() {
   # Prints the waybar result in a human readable
   # format to stdout
+  NO_ICON=false
 
   declare -A CONFIG="($(read_conf))"
   declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
@@ -238,7 +234,7 @@ term_return() {
     esac
   done
 
-  ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " ${WTHR_ARR["WI"]}"; fi)"
+  ICON="$(if $NO_ICON; then echo ""; else echo " ${WTHR_ARR["WI"]}"; fi)"
 
   echo "TEXT:
 ${WTHR_ARR["TEMP"]}$ICON

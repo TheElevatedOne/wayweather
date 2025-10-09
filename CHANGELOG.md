@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## wayweather 2.1.0
+
+- Finally fix the icon issue
+- Color code help and log messages
+
 ## wayweather 2.0.0
 
 - Add Custom Locations, their loading, saving

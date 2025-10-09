@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 get_version() {
-  echo "2.0.2"
+  echo "2.1.0"
 }

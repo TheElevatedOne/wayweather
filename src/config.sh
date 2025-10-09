@@ -8,6 +8,8 @@ make_conf() {
   CONF_PATH="$HOME/.config/wayweather/"
   CONF_FILE="config.toml"
 
+  echo -e "[\033[1;33mLOG\033[0m] Generating Config" >&2
+
   mkdir -p "$CONF_PATH"
   touch "$CONF_PATH$CONF_FILE"
   echo '# WayWeather config
@@ -36,6 +38,8 @@ read_conf() {
     # Create config if it does not exist
   fi
 
+  echo -e "[\033[1;33mLOG\033[0m] Reading Config" >&2
+
   eval "$(tombl -e config=wayweather "$CONF_PATH")"
   if [ "${config[ip_loc]}" = "true" ]; then
     LOC=$(curl http://ip-api.com/json?fields=lat,lon,city,country -s | jq -c)
@@ -46,6 +50,7 @@ read_conf() {
       ["COUNTRY"]="$(echo "$LOC" | jq -r '.country')"
       ["UNITS"]="${config[units]}"
     )
+    echo -e "[\033[1;33mLOG\033[0m] Using IP Geolocation" >&2
   else
     CONF=(
       ["LAT"]="${config[latitude]}"
@@ -54,6 +59,7 @@ read_conf() {
       ["COUNTRY"]="${config[country]}"
       ["UNITS"]="${config[units]}"
     )
+    echo -e "[\033[1;33mLOG\033[0m] Using Location in Config" >&2
   fi
 
   printf "%s " "${CONF[@]@K}"
@@ -102,6 +108,12 @@ write_conf() {
       LOCAT="false"
     fi
 
+    if [[ "$LOCAT" == "true" ]]; then
+      echo -e "[\033[1;33mLOG\033[0m] Enabling IP Geolocation" >&2
+    else
+      echo -e "[\033[1;33mLOG\033[0m] Setting a Custom Location" >&2
+    fi
+
     if ! [[ -v LAT ]]; then
       LAT="${config[latitude]}"
     fi
@@ -129,7 +141,7 @@ longitude = $LONG
 city = \"$CITY\"
 country = \"$COUNTRY\"
 units = \"$UNITS\"" >"$CONF_PATH"
-    echo "[LOG] Config Generated"
+    echo -e "[\033[1;33mLOG\033[0m] Config Generated" >&2
     ;;
   reset)
     eval "$(tombl -e config=wayweather "$CONF_PATH")"
@@ -145,7 +157,7 @@ longitude = 0
 city = \"\"
 country = \"\"
 units = \"${config[units]}\"" >"$CONF_PATH"
-    echo "[LOG] Config Reset to Default"
+    echo -e "[\033[1;33mLOG\033[0m] Config Reset to Default" >&2
     ;;
   esac
 }

@@ -7,7 +7,7 @@ make_loc() {
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   if [ ! -f "$SAVE_PATH" ]; then
     printf "{}" >"$SAVE_PATH"
-    echo "[LOG] Created Custom Locations File"
+    echo -e "[\033[1;33mLOG\033[0m] Created Custom Locations File" >&2
   fi
 }
 
@@ -17,8 +17,8 @@ load_loc() {
   JSON="$(cat "$SAVE_PATH" | jq -c)"
 
   if [[ "$(echo "$JSON" | jq length)" -eq "0" ]]; then
-    echo "[ERROR] No locations saved, exiting"
-    echo "[INFO] Run --set --help for info on saving locations"
+    echo -e "[\033[31mERROR\033[0m] No locations saved, exiting" >&2
+    echo -e "[\033[36mINFO\033[0m] Run --set --help for info on saving locations" >&2
     exit 1
   fi
 
@@ -40,13 +40,13 @@ load_loc() {
           fi
         done
         if $NUMBER && $DEFAULT; then
-          echo "[ERROR] Using Default and Location ID at the same time"
-          echo "[LOG] Exiting."
+          echo -e "[\033[31mERROR\033[0m] Using Default and Location ID at the same time" >&2
+          echo -e "[\033[1;33mLOG\033[0m] Exiting." >&2
           exit 1
         fi
         if ! $NUMBER; then
-          echo "[WARNING] Invalid Location ID"
-          echo "[LOG] Continuing normal execution"
+          echo -e "[\033[1;31mWARNING\033[0m] Invalid Location ID" >&2
+          echo -e "[\033[1;33mLOG\033[0m] Continuing normal execution" >&2
         fi
       fi
       ;;
@@ -67,12 +67,12 @@ $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].co
     if [[ "$(echo "$JSON" | jq length)" -gt "1" ]]; then
       read -p "Enter a number [0-"$(($(echo "$JSON" | jq length) - 1))"]: " INPUT
       if ! [[ "$INPUT" =~ ^[0-9]+$ ]] || ! [[ "$INPUT" -ge "0" ]] || ! [[ "$INPUT" -le "$(($(echo "$JSON" | jq length) - 1))" ]]; then
-        echo "[ERROR] Input Not a Valid Number! Exiting."
+        echo -e "[\033[31mERROR\033[0m] Input Not a Valid Number! Exiting." >&2
         exit 1
       fi
-      echo "[LOG] Selecting Location ID $INPUT"
+      echo -e "[\033[1;33mLOG\033[0m] Selecting Location ID $INPUT" >&2
     else
-      echo "[LOG] Selecting Location ID 0"
+      echo -e "[\033[1;33mLOG\033[0m] Selecting Location ID 0" >&2
     fi
   elif $DEFAULT && ! $NUMBER; then
     readarray -t def <<<"$(echo "$JSON" | jq ".[].default")"
@@ -83,24 +83,24 @@ $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].co
       fi
     done
     if ! [[ -v INPUT ]]; then
-      echo "[ERROR] Default Location Not Set! Exiting"
+      echo -e "[\033[31mERROR\033[0m] Default Location Not Set! Exiting" >&2
       exit 1
     else
       UNITS="$(if [[ $(echo "$JSON" | jq ".[\"$INPUT\"].units") == '"met"' ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)"
-      echo "[LOG] Default Location Found"
-      echo "[LOG] Location: \
+      echo -e "[\033[1;33mLOG\033[0m] Default Location Found" >&2
+      echo -e "[\033[1;33mLOG\033[0m] Location: \
 $(echo "$JSON" | jq ".[\"$INPUT\"].city"), $(echo "$JSON" | jq ".[\"$INPUT\"].country") \
 ($(echo "$JSON" | jq ".[\"$INPUT\"].latitude"), $(echo "$JSON" | jq ".[\"$INPUT\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
       unset UNITS
     fi
   elif $NUMBER && ! $DEFAULT; then
     INPUT="$LOCATION_ID"
     UNITS="$(if [[ $(echo "$JSON" | jq ".[\"$INPUT\"].units") == '"met"' ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)"
-    echo "[LOG] Location ID $INPUT: \
+    echo -e "[\033[1;33mLOG\033[0m] Location ID $INPUT: \
 $(echo "$JSON" | jq ".[\"$INPUT\"].city"), $(echo "$JSON" | jq ".[\"$INPUT\"].country") \
 ($(echo "$JSON" | jq ".[\"$INPUT\"].latitude"), $(echo "$JSON" | jq ".[\"$INPUT\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
     unset UNITS
   fi
 
@@ -148,7 +148,7 @@ write_loc() {
 \"units\":\"$UNITS\",
 \"default\":false
 }}"
-  echo "[LOG] Saved location: $CITY, $COUNTRY ($LAT, $LONG) [$(if [[ "$UNITS" == "met" ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)]"
+  echo -e "[\033[1;33mLOG\033[0m] Saved location: $CITY, $COUNTRY ($LAT, $LONG) [$(if [[ "$UNITS" == "met" ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)]" >&2
   # Add check for replacing with new confgigs
   SAVE="$(cat "$SAVE_PATH" | jq ". += $(echo "$JSON" | jq -c)")"
   echo "$SAVE" >"$SAVE_PATH"
@@ -162,8 +162,8 @@ default_loc() {
   make_loc
 
   if [[ "$(echo "$JSON" | jq length)" -eq "0" ]]; then
-    echo "[ERROR] No locations saved, exiting"
-    echo "[INFO] Run --set --help for info on saving locations"
+    echo -e "[\033[31mERROR\033[0m] No locations saved, exiting" >&2
+    echo -e "[\033[36mINFO\033[0m] Run --set --help for info on saving locations" >&2
     exit 1
   fi
 
@@ -177,30 +177,30 @@ default_loc() {
 $(if [[ "$(echo "$JSON" | jq ".[\"$index\"].default")" == "true" ]]; then echo "*"; else echo ""; fi) \
 $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].country") \
 ($(echo "$JSON" | jq ".[\"$index\"].latitude"), $(echo "$JSON" | jq ".[\"$index\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
     DEFAULT="$(if [[ "$(echo "$JSON" | jq ".[\"$index\"].default")" == "true" ]]; then echo "$index"; else echo "$DEFAULT"; fi)"
   done
   unset UNITS
 
   read -p "Enter a number [0-"$(($(echo "$JSON" | jq length) - 1))"]: " INPUT
   if ! [[ "$INPUT" =~ ^[0-9]+$ ]] || ! [[ "$INPUT" -ge "0" ]] || ! [[ "$INPUT" -le "$(($(echo "$JSON" | jq length) - 1))" ]]; then
-    echo "[ERROR] Input Not a Valid Number! Exiting."
+    echo -e "[\033[31mERROR\033[0m] Input Not a Valid Number! Exiting." >&2
     exit 1
   fi
 
   if [[ "$INPUT" == "$DEFAULT" ]]; then
-    echo "[LOG] Selected Location is already Default"
-    echo "[LOG] Exiting"
+    echo -e "[\033[1;33mLOG\033[0m] Selected Location is already Default" >&2
+    echo -e "[\033[1;33mLOG\033[0m] Exiting" >&2
     exit 0
   else
     if [[ "$DEFAULT" == "" ]]; then
       MOD="$(echo "$JSON" | jq ".[\"$INPUT\"].default = true")"
       echo "$MOD" >"$SAVE_PATH"
-      echo "[LOG] Default Location Selected"
+      echo -e "[\033[1;33mLOG\033[0m] Default Location Selected" >&2
     else
       MOD="$(echo "$JSON" | jq ".[\"$INPUT\"].default = true" | jq ".[\"$DEFAULT\"].default = false")"
       echo "$MOD" >"$SAVE_PATH"
-      echo "[LOG] Default Location Selected"
+      echo -e "[\033[1;33mLOG\033[0m] Default Location Selected" >&2
     fi
   fi
   unset JSON
@@ -218,7 +218,7 @@ list_loc() {
 $(if [[ "$(echo "$JSON" | jq ".[\"$index\"].default")" == "true" ]]; then echo "*"; else echo ""; fi) \
 $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].country") \
 ($(echo "$JSON" | jq ".[\"$index\"].latitude"), $(echo "$JSON" | jq ".[\"$index\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
   done
 }
 
@@ -230,8 +230,8 @@ delete_loc() {
   NUMBER=false
 
   if [[ "$(echo "$JSON" | jq length)" -eq "0" ]]; then
-    echo "[ERROR] No locations saved, exiting"
-    echo "[INFO] Run --set --help for info on saving locations"
+    echo -e "[\033[31mERROR\033[0m] No locations saved, exiting" >&2
+    echo -e "[\033[36mINFO\033[0m] Run --set --help for info on saving locations" >&2
     exit 1
   fi
 
@@ -249,8 +249,8 @@ delete_loc() {
           fi
         done
         if ! $NUMBER; then
-          echo "[WARNING] Invalid Location ID"
-          echo "[LOG] Continuing normal execution"
+          echo -e "[\033[1;31mWARNING\033[0m] Invalid Location ID" >&2
+          echo -e "[\033[1;33mLOG\033[0m] Continuing normal execution" >&2
         fi
       fi
       ;;
@@ -263,12 +263,12 @@ delete_loc() {
       case $CONFIRM in
       [yY]) ;;
       [nN])
-        echo "[LOG] Operation Cancelled"
+        echo -e "[\033[1;33mLOG\033[0m] Operation Cancelled" >&2
         exit 0
         ;;
       *)
-        echo "[ERROR] Invalid Input"
-        echo "[LOG] Operation Cancelled"
+        echo -e "[\033[31mERROR\033[0m] Invalid Input" >&2
+        echo -e "[\033[1;33mLOG\033[0m] Operation Cancelled" >&2
         exit 1
         ;;
       esac
@@ -285,10 +285,10 @@ delete_loc() {
       printf "$DELETE" >"$SAVE_PATH"
     fi
     UNITS="$(if [[ $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].units") == '"met"' ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)"
-    echo "[LOG] Deleted Location ID $LOCATION_ID: \
+    echo -e "[\033[1;33mLOG\033[0m] Deleted Location ID $LOCATION_ID: \
 $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].city"), $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].country") \
 ($(echo "$JSON" | jq ".[\"$LOCATION_ID\"].latitude"), $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
     unset units
   else
     for index in $(seq 0 "$(($(echo "$JSON" | jq length) - 1))"); do
@@ -297,13 +297,13 @@ $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].city"), $(echo "$JSON" | jq ".[\"$LOCAT
 $(if [[ "$(echo "$JSON" | jq ".[\"$index\"].default")" == "true" ]]; then echo "*"; else echo ""; fi) \
 $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].country") \
 ($(echo "$JSON" | jq ".[\"$index\"].latitude"), $(echo "$JSON" | jq ".[\"$index\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
     done
     unset UNITS
 
     read -p "Enter a number [0-"$(($(echo "$JSON" | jq length) - 1))"]: " INPUT
     if ! [[ "$INPUT" =~ ^[0-9]+$ ]] || ! [[ "$INPUT" -ge "0" ]] || ! [[ "$INPUT" -le "$(($(echo "$JSON" | jq length) - 1))" ]]; then
-      echo "[ERROR] Input Not a Valid Number! Exiting."
+      echo -e "[\033[31mERROR\033[0m] Input Not a Valid Number! Exiting." >&2
       exit 1
     fi
     LOCATION_ID="$INPUT"
@@ -313,12 +313,12 @@ $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].co
       case $CONFIRM in
       [yY]) ;;
       [nN])
-        echo "[LOG] Operation Cancelled"
+        echo -e "[\033[1;33mLOG\033[0m] Operation Cancelled" >&2
         exit 0
         ;;
       *)
-        echo "[ERROR] Invalid Input"
-        echo "[LOG] Operation Cancelled"
+        echo -e "[\033[31mERROR\033[0m] Invalid Input" >&2
+        echo -e "[\033[1;33mLOG\033[0m] Operation Cancelled" >&2
         exit 1
         ;;
       esac
@@ -336,10 +336,10 @@ $(echo "$JSON" | jq ".[\"$index\"].city"), $(echo "$JSON" | jq ".[\"$index\"].co
       printf "$DELETE" >"$SAVE_PATH"
     fi
     UNITS="$(if [[ $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].units") == '"met"' ]]; then echo "°C, mm, km/h"; else echo "°F, inch, mph"; fi)"
-    echo "[LOG] Deleted Location ID $LOCATION_ID: \
+    echo -e "[\033[1;33mLOG\033[0m] Deleted Location ID $LOCATION_ID: \
 $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].city"), $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].country") \
 ($(echo "$JSON" | jq ".[\"$LOCATION_ID\"].latitude"), $(echo "$JSON" | jq ".[\"$LOCATION_ID\"].longitude")) \
-[$UNITS]" | sed -e 's/"//g'
+[$UNITS]" | sed -e 's/"//g' >&2
     unset units
   fi
 }

@@ -89,17 +89,17 @@ api_pull() {
   declare -A WTHR
 
   WTHR=(
-    ["CITY"]=$CITY
-    ["COUNTRY"]=$COUNTRY
-    ["TIME"]=$TIME
-    ["TEMP"]=$TEMP
-    ["HUMID"]=$HUMID
-    ["PREC"]=$PREC
-    ["CLOUD"]=$CLOUD
-    ["WIND_S"]=$WIND_S
-    ["WIND_G"]=$WIND_G
+    ["CITY"]="$CITY"
+    ["COUNTRY"]="$COUNTRY"
+    ["TIME"]="$TIME"
+    ["TEMP"]="$TEMP"
+    ["HUMID"]="$HUMID"
+    ["PREC"]="$PREC"
+    ["CLOUD"]="$CLOUD"
+    ["WIND_S"]="$WIND_S"
+    ["WIND_G"]="$WIND_G"
     ["WIND_DIR"]="$WIND_DIR_LET ($WIND_DIR°)"
-    ["WI"]=$WI
+    ["WI"]="$WI"
   )
 
   printf "%s " "${WTHR[@]@K}"
@@ -109,6 +109,7 @@ daemon() {
   SAVE_PATH="$HOME/.config/wayweather/locations.json"
   CONF_PATH="$HOME/.config/wayweather/config.toml"
   SLEEP="15"
+  NO_ICON=false
 
   for i in "$@"; do
     case $i in
@@ -146,7 +147,7 @@ daemon() {
     declare -A CONFIG="($(read_conf))"
     declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
 
-    ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
+    ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
     echo "{'text': '${WTHR_ARR["TEMP"]}$ICON'\
 ,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
