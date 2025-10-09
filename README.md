@@ -10,9 +10,9 @@ It got out of the original scope the more I worked on it xd.
 ## Sections
 
 - [**USAGE**](#usage)
-- [INSTALLATION](#installation)
-- [WAYBAR MODULE](#waybar-module)
-- [CONFIG](#config)
+- [**INSTALLATION**](#installation)
+- [**WAYBAR MODULE**](#waybar-module)
+- [**CONFIG**](#config)
 
 ## Usage
 
