@@ -215,7 +215,7 @@ waybar_return() {
     esac
   done
 
-  ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
+  ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
   echo "{'text': '${WTHR_ARR["TEMP"]}$ICON'\
 ,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
@@ -238,7 +238,7 @@ term_return() {
     esac
   done
 
-  ICON="$(if $NO_ICON; then echo ""; else echo " ${WTHR_ARR["WI"]}"; fi)"
+  ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " ${WTHR_ARR["WI"]}"; fi)"
 
   echo "TEXT:
 ${WTHR_ARR["TEMP"]}$ICON

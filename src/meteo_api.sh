@@ -146,7 +146,7 @@ daemon() {
     declare -A CONFIG="($(read_conf))"
     declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
 
-    ICON="$(if $NO_ICON; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
+    ICON="$(if [[ -v NO_ICON ]]; then echo ""; else echo " <big>${WTHR_ARR["WI"]}</big>"; fi)"
 
     echo "{'text': '${WTHR_ARR["TEMP"]}$ICON'\
 ,'tooltip': '${WTHR_ARR["CITY"]}, ${WTHR_ARR["COUNTRY"]}\nTime: ${WTHR_ARR["TIME"]}\
