@@ -38,7 +38,7 @@ case $1 in
       ;;
     esac
   done
-  echo "wayweather $VERSION"
+  echo "wayweather $(get_version)"
   ;;
 -g | --get)
   for i in "$@"; do
