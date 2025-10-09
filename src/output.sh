@@ -199,8 +199,8 @@ waybar_return() {
   # Prints a json string that waybar can parse
   NO_ICON=false
 
-  declare -A CONFIG="($(read_conf))"
-  declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}"))"
+  declare -A CONFIG="($(read_conf 2>/dev/null))"
+  declare -A WTHR_ARR="($(api_pull "${CONFIG["LAT"]}" "${CONFIG["LONG"]}" "${CONFIG["CITY"]}" "${CONFIG["COUNTRY"]}" "${CONFIG["UNITS"]}" 2>/dev/null))"
 
   for i in "$@"; do
     case $i in
