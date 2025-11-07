@@ -7,6 +7,14 @@ It got out of the original scope the more I worked on it xd.
 
 [![AUR Version](https://img.shields.io/aur/version/wayweather?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/wayweather)
 
+## Currently Undergoing a Complete Rewrite to C
+
+I wanted the script to be lighter on the cpu and wanted to add a gui, but not through zenity or kdialog, so I went for a complete rewrite. 
+
+I chose C as it's a really fast language and I wanted to learn it, although it may be a bit of a stretch for this to be the first project. 
+
+It's going slowly but steadily, already have the configs finished. You can see the progress at the [rewrite_to_c branch](https://github.com/TheElevatedOne/wayweather/tree/rewrite_to_c).
+
 ## Sections
 
 - [**USAGE**](#usage)
