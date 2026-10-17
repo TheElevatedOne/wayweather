@@ -1,0 +1,38 @@
+// Wayweather module for Waybar — merge into ~/.config/waybar/config.jsonc
+// and add "custom/weather" to one of "modules-left/center/right".
+{
+  "custom/weather": {
+    // The daemon updates instantly when you switch locations or edit
+    // settings (TUI, `wayweather next`, ...), and refetches every
+    // refresh_interval seconds.
+    "exec": "wayweather daemon",
+    "return-type": "json",
+    "restart-interval": 10,
+    "format": "{}",
+    "tooltip": true,
+
+    // Left click: next saved location, right click: previous,
+    // middle click: refetch now, scroll: cycle too.
+    "on-click": "wayweather next",
+    "on-click-right": "wayweather prev",
+    "on-click-middle": "wayweather refresh",
+    "on-scroll-up": "wayweather prev",
+    "on-scroll-down": "wayweather next",
+
+    // Open the TUI in a terminal (adjust to your terminal emulator):
+    // "on-click-right": "kitty --class floating -e wayweather tui",
+
+    // Optional: icons by condition, using "alt" from the JSON output
+    // "format": "{icon} {}",
+    // "format-icons": { "clear": "", "rain": "", "snow": "" }
+  },
+
+  // Alternative without the daemon: poll every 15 minutes
+  "custom/weather-poll": {
+    "exec": "wayweather get",
+    "return-type": "json",
+    "interval": 900,
+    "on-click": "wayweather next && pkill -RTMIN+8 waybar",
+    "signal": 8
+  }
+}

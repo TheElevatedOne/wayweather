@@ -1,16 +1,13 @@
-#ifndef HELP_H_
-#define HELP_H_
+#ifndef WW_HELP_H_
+#define WW_HELP_H_
 
-void main_help();
-void extra_help();
-void get_help();
-void set_help();
-void reset_help();
-void load_help();
-void print_help();
-void default_help();
-void delete_help();
-void daemon_help();
-void list_help();
+#include <stdbool.h>
+#include <stdio.h>
 
-#endif // !HELP_H_
+void help_set_color(bool color);
+void help_main(FILE *out);
+/* Prints help for a command or topic; false if unknown */
+bool help_command(FILE *out, const char *name);
+void help_version(FILE *out);
+
+#endif // !WW_HELP_H_

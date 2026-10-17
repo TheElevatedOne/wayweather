@@ -1,143 +1,251 @@
 # WayWeather
 
-Custom Weather Script for Waybar with IP Geolocation,
-Custom Locations, Default Locations and many more things.
+Weather module for [Waybar](https://github.com/Alexays/Waybar), written in C,
+powered by [Open-Meteo](https://open-meteo.com) (no API key needed).
 
-It got out of the original scope the more I worked on it xd.
+- Current weather in the bar, with a rich tooltip: hourly and daily forecasts,
+  wind, pressure, UV, sunrise/sunset
+- **Saved locations**, each with its own measurements (°C/°F, km/h, m/s, mph,
+  knots, mm/inch, hPa/inHg/mmHg/kPa, 24h/12h)
+- **Geolocation** overrides the current location: GPS via gpsd, GeoClue2, or
+  IP, tried in that order
+- **TUI** to search cities, then add, edit, delete (with undo), reorder and
+  switch locations, plus all settings with a live preview
+- **Daemon** that updates the bar as soon as you change something, works
+  offline from its cache, and reacts to clicks (`next` / `prev` / `refresh`)
+- Bar text you can template, CSS classes per condition, day/night and
+  temperature
+- Completions for bash, zsh and fish, a man page, and automatic migration of
+  2.x configs
 
 [![AUR Version](https://img.shields.io/aur/version/wayweather?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/wayweather)
 
 ## Sections
 
-- [**USAGE**](#usage)
-- [**INSTALLATION**](#installation)
-- [**WAYBAR MODULE**](#waybar-module)
-- [**CONFIG**](#config)
+- [**Installation**](#installation)
+- [**Waybar module**](#waybar-module)
+- [**Usage**](#usage)
+- [**TUI**](#tui)
+- [**Config**](#config)
+- [**Geolocation**](#geolocation)
+
+## Installation
+
+**Dependencies:** `libcurl`, `cJSON`, `ncursesw`, and optionally
+`libgeoclue-2.0`. You also need a [Nerd Font](https://www.nerdfonts.com/) for
+the icons.
+
+| Distro        | Packages                                                     |
+| ------------- | ------------------------------------------------------------ |
+| Arch          | `curl cjson ncurses geoclue`                                 |
+| Debian/Ubuntu | `libcurl4-openssl-dev libcjson-dev libncurses-dev libgeoclue-2-dev pkg-config` |
+| Fedora        | `libcurl-devel cjson-devel ncurses-devel geoclue2-devel`     |
+
+1. **AUR**: `yay -S wayweather` / `paru -S wayweather`
+2. **From source**:
+
+   ```sh
+   git clone https://github.com/TheElevatedOne/wayweather.git
+   cd wayweather
+   make                 # -> dist/wayweather
+   make check           # offline smoke tests
+   sudo make install    # or: make install-user  (~/.local)
+   ```
+
+   | Target                        | What it does                                   |
+   | ----------------------------- | ---------------------------------------------- |
+   | `make` / `make release`       | optimised binary in `dist/`                    |
+   | `make debug`                  | ASan/UBSan build in `build/debug/`             |
+   | `make install` / `uninstall`  | honours `PREFIX` (default `/usr/local`) and `DESTDIR` |
+   | `make package`                | release tarball in `dist/`                     |
+   | `make clean` / `distclean`    | remove `build/` (and `dist/`)                  |
+   | `GEOCLUE=0`                   | build without GeoClue (auto-detected)          |
+
+Sources live in `src/`, objects and dependency files in `build/`, and the
+release binary goes to `dist/`.
+
+## Waybar module
+
+Recommended setup, using the daemon:
+
+```jsonc
+"custom/weather": {
+  "exec": "wayweather daemon",
+  "return-type": "json",
+  "restart-interval": 10,
+  "on-click": "wayweather next",
+  "on-click-right": "wayweather prev",
+  "on-click-middle": "wayweather refresh"
+}
+```
+
+The daemon redraws immediately whenever the config changes, whether from the
+TUI, `wayweather next`, or an editor. It refetches every `refresh_interval`
+seconds. When the network is down it keeps showing cached data, adds the
+`stale` class, and retries with backoff.
+
+To poll instead, use `"exec": "wayweather get"` with `"interval": 900`.
+
+Example config and CSS: [`data/waybar/`](data/waybar). Classes on every
+update:
+
+| Kind        | Classes                                                                 |
+| ----------- | ----------------------------------------------------------------------- |
+| condition   | `clear` `partly-cloudy` `cloudy` `fog` `drizzle` `rain` `freezing` `snow` `thunder` |
+| time of day | `day` `night`                                                           |
+| temperature | `hot` `warm` `mild` `cool` `cold`                                       |
+| state       | `stale` `geolocated` `error`                                            |
+
+`alt` holds the condition (handy for `format-icons`). `percentage` holds the
+cloud cover.
 
 ## Usage
 
 ```
-> wayweather [-h/--help] [OPTIONS]
+wayweather [GLOBAL OPTIONS] COMMAND [ARGS]
 
-Weather script for Waybar with IP Geolocation
-
-HELP:
-    -h, --help            Print main help information
-    -v, --version         Prints the version
-    <OPTION> -h, --help   Print help information about
-                          an option
-    Example: > wayweather --get --help
-
-OPTIONS:
-    -g, --get [--no-icon]   Pring waybar json input
-    -s, --set <ARGS>        Set custom location and
-                            print waybar json input
-    -r, --reset [--units]   Reset custom location to
-                            IP geolocation
-    -p, --print [--no-icon] Print waybar result to stdout
-    -l, --load [OPTIONS]    Select locations from saved ones
-        --list              List saved locations
-    -sd, --set-default      Set default location for faster
-                            loading
-    -d, --delete [OPTIONS]  Delete locations from saved ones
-    -w, --daemon [OPTIONS]  Runs a loop for checking config
-                            changes prints waybar json when
-                            a change occurs
+Commands:
+  get       Print Waybar JSON once (use with "interval")
+  print     Show a detailed report with forecast in the terminal
+  daemon    Stream Waybar JSON, updating on config changes
+  tui       Interactive manager for locations, units and settings
+  search    Search places by name
+  add       Save a new location
+  list      List saved locations
+  remove    Delete saved locations
+  edit      Change a saved location
+  use       Show a saved location (or geolocation)
+  default   Show or set the default location
+  next      Switch to the next saved location
+  prev      Switch to the previous saved location
+  set       Set the current location manually
+  units     Show or change measurements
+  geo       Control GPS / IP geolocation
+  refresh   Make running daemons refetch now
+  reset     Reset the current location
+  config    Inspect or edit the config file
+  help      Show help for a command
 ```
 
-### For more information, go over to the [Wiki](https://github.com/TheElevatedOne/wayweather/wiki)
+`LOC` is a number from `wayweather list`, a name, a city, or `default`.
+`wayweather COMMAND --help` explains each command.
 
-## Installation
+```sh
+wayweather search "Springfield, Illinois"     # comma narrows by region/country
+wayweather add Vienna --name Work --default   # pick from matches in a terminal
+wayweather add --lat 64.15 --lon -21.94 --city Reykjavík -u imperial
+wayweather use work                           # show it in Waybar
+wayweather units imperial --pressure hpa      # preset + override
+wayweather units -l 2 --wind kn               # units of a saved location
+wayweather print -l Reykjavík                 # forecast in the terminal
+wayweather geo on                             # follow GPS / IP position
+wayweather geo save Cabin                     # save where you are now
+```
 
-**Required Packages:**
+The 2.x flags still work: `--get`, `--print`, `--set`, `--load`, `--list`,
+`--set-default`, `--delete`, `--daemon` and `--reset`.
 
-- bash
-- curl
-- awk
-- jq
-- [tombl](https://github.com/snyball/tombl)
-- font from [nerdfonts](https://www.nerdfonts.com/font-downloads) or a [patched font](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-patcher)
+## TUI
 
-1. **Cloning**
-    - Clone the repo via `git clone https://github.com/TheElevatedOne/wayweather.git`
-    - Use the script in that directory
-2. **AUR**
-    - [wayweather](https://aur.archlinux.org/packages/wayweather)
-    - `yay -S wayweather`, `paru -S wayweather`, etc.
+Run `wayweather tui`, or just `wayweather` in a terminal.
 
-## Waybar Module
+- **Locations**: the list of saved locations, with details and a live
+  forecast for the selected one.
+  `a` search & add · `n` add by coordinates · `e` edit · `u` units ·
+  `d` delete · `z` undo · `*` default · `J`/`K` reorder · `/` filter ·
+  `Enter` show in Waybar · `s` save current
+- **Current**: what Waybar shows right now, including the detected position.
+  `g` toggle geolocation · `p` provider · `e` edit · `u` units ·
+  `s` save as location
+- **Settings**: every option, with a live bar preview.
+  `←`/`→` change · `Enter` edit · `x` reset to default
 
-1. Using static loading
-
-    - ```jsonc
-      "custom/wayweather": {
-        "format": "{text}",
-        "interval": 900,
-        "exec": "path/to/wayweather --get",
-        "return-type": "json"
-      },
-      ```
-
-2. Using wayweather Daemon
-
-    - ```jsonc
-      "custom/wayweather": {
-        "format": "{text}",
-        "exec": "path/to/wayweather --daemon",
-        "return-type": "json",
-        "restart-interval": 5
-      },
-      ```
+Tabs: `1` `2` `3` / `Tab`. Help: `?`. The mouse works (click, double-click,
+wheel). Every change is saved immediately, and a running daemon picks it up
+right away. If the config changes outside the TUI, it reloads automatically.
 
 ## Config
 
-The configuration file is at `$HOME/.config/wayweather/config.toml`
-and will be created on first run.
+`$XDG_CONFIG_HOME/wayweather/config.json` (normally
+`~/.config/wayweather/config.json`) is created on first run. An existing
+`config.toml` / `locations.json` from 2.x is imported automatically and left
+untouched.
 
-```toml
-# WayWeather config
-# ip_loc enables/disables autolocation through ip address
-# latitide, longitude, city and country must be set when ip_loc is false
-# units can be either "imp" or "met" (imperial and metric)
-
-[wayweather]
-ip_loc = false
-latitude = 40.71
-longitude = -74.01
-city = "New York"
-country = "USA"
-units = "met"
-
-```
-
-- ip_loc - can be `true` or `false`, when setting location with `--set` it auto-disables itself
-- latitide & longitude - numbers in decimal coordinate format rounded to two digits
-  - get them from [https://www.gps-coordinates.net/](https://www.gps-coordinates.net/) (ex.)
-- city - city name
-- country - country name
-- units - either `met` or `imp` for metric and imperial
-  - `met` - °C, mm, km/h
-  - `imp` - °F, inch, mph
-
-The saved locations are at `$HOME/.config/wayweather/locations.json`
-and will be created when saving locations.
-
-```json
+```jsonc
 {
-  "0": {
-    "latitude": 40.71,
-    "longitude": -74.01,
-    "city": "New York",
-    "country": "USA",
-    "units": "imp",
-    "default": false
+  "version": 3,
+  "current": {                      // shown when geolocation is off
+    "name": "", "city": "Vienna", "region": "Vienna", "country": "Austria",
+    "latitude": 48.20849, "longitude": 16.37208,
+    "units": {
+      "temperature": "celsius",     // celsius | fahrenheit
+      "wind_speed": "kmh",          // kmh | ms | mph | kn
+      "precipitation": "mm",        // mm | inch
+      "pressure": "hpa",            // hpa | inhg | mmhg | kpa
+      "time_format": "24h"          // 24h | 12h
+    }
   },
-  "1": {
-  ...
+  "active": 0,                      // saved location loaded into "current"
+  "geolocation": {
+    "enabled": false,               // true: position overrides "current"
+    "provider": "auto",             // auto | gpsd | geoclue | ip
+    "gpsd_host": "localhost", "gpsd_port": 2947,
+    "timeout": 5,                   // seconds per provider
+    "cache_ttl": 600,               // reuse a fix for this long
+    "reverse_geocode": true,        // name GPS fixes (OpenStreetMap)
+    "include_in_cycle": true        // next/prev also visit geolocation
   },
-  ...
+  "display": {
+    "icons": true,
+    "text": "{temp}{tunit} {icon}", // bar text template
+    "tooltip_title": "{place}",
+    "tooltip": true,
+    "hours": 6,                     // hourly rows in the tooltip (0-24)
+    "days": 5,                      // daily rows in the tooltip (0-7)
+    "decimals": 1                   // temperature decimals (0-2)
+  },
+  "refresh_interval": 900,          // daemon refresh, seconds
+  "cache_ttl": 600,                 // weather cache for `get`, seconds
+  "locations": [ { "name": "Work", "city": "Vienna", ..., "default": true } ]
 }
 ```
 
-- has a similar structure to the config but supports saviing multiple locations
-- also supports setting a default location
+Run `wayweather config edit` to edit the file in `$EDITOR`; it validates the
+result afterwards.
+
+**Template placeholders** (`wayweather help format`):
+`{icon} {temp} {feels} {tunit} {desc} {condition} {tmin} {tmax} {humidity}
+{dew} {precip} {punit} {precip_prob} {cloud} {wind} {gust} {wunit} {wind_dir}
+{wind_arrow} {wind_deg} {pressure} {presunit} {uv} {visibility} {sunrise}
+{sunset} {name} {city} {region} {country} {place} {lat} {lon} {time}
+{updated} {date} {source}`
+
+## Geolocation
+
+`provider: "auto"` tries each source in turn and caches the fix for
+`cache_ttl` seconds:
+
+1. **gpsd**: a GPS receiver served by [gpsd](https://gpsd.io) on
+   `localhost:2947`
+2. **GeoClue2**: Wi-Fi, cell or GPS position via the desktop location
+   service. Without a desktop agent (common on wlroots compositors), allow the
+   app in `/etc/geoclue/geoclue.conf`:
+
+   ```ini
+   [wayweather]
+   allowed=true
+   system=false
+   users=
+   ```
+
+3. **IP**: [ip-api.com](https://ip-api.com), with
+   [ipwho.is](https://ipwho.is) as a fallback
+
+Units always come from the current location. If geolocation fails, Waybar
+falls back to the configured location.
+
+---
+
+Weather data by [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Place
+search by Open-Meteo Geocoding, reverse geocoding ©
+[OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.

@@ -1,0 +1,28 @@
+/* Wayweather classes — add to ~/.config/waybar/style.css
+ *
+ * Every update carries:
+ *   condition: clear partly-cloudy cloudy fog drizzle rain freezing snow thunder
+ *   time:      day night
+ *   temp:      hot warm mild cool cold
+ *   extra:     stale (offline, cached data)  geolocated  error
+ */
+
+#custom-weather {
+  padding: 0 10px;
+}
+
+#custom-weather.clear.day      { color: #f9e2af; }
+#custom-weather.clear.night    { color: #b4befe; }
+#custom-weather.partly-cloudy  { color: #fab387; }
+#custom-weather.cloudy,
+#custom-weather.fog            { color: #a6adc8; }
+#custom-weather.drizzle,
+#custom-weather.rain           { color: #89b4fa; }
+#custom-weather.freezing,
+#custom-weather.snow           { color: #cdd6f4; }
+#custom-weather.thunder        { color: #f38ba8; }
+
+#custom-weather.hot            { font-weight: bold; }
+
+#custom-weather.stale          { opacity: 0.6; }
+#custom-weather.error          { color: #f38ba8; }
