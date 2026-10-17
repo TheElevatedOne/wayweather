@@ -1,0 +1,169 @@
+.TH WAYWEATHER 1 "2026-10-17" "wayweather 3.0.0" "User Commands"
+.SH NAME
+wayweather \- weather module for Waybar using Open\-Meteo
+.SH SYNOPSIS
+.B wayweather
+.RI [ global-options ]
+.I command
+.RI [ args ]
+.SH DESCRIPTION
+.B wayweather
+shows the current weather and forecast from Open\-Meteo in Waybar.
+It keeps a
+.I current location
+plus any number of
+.IR "saved locations" ,
+each with its own units. GPS (gpsd), GeoClue2 or IP geolocation can
+override the current location.
+.PP
+Without a command, wayweather opens the TUI when run in a terminal and
+prints Waybar JSON otherwise.
+.SH GLOBAL OPTIONS
+.TP
+.BR \-c ", " \-\-config " " \fIFILE\fR
+Use another config file.
+.TP
+.B \-\-verbose
+Log progress to stderr; give it twice for debug output.
+.TP
+.B \-\-no\-color
+Disable colored output (also honours
+.BR NO_COLOR ).
+.TP
+.BR \-h ", " \-\-help
+Show help. Every command also accepts
+.BR \-\-help .
+.TP
+.BR \-v ", " \-\-version
+Show the version and library versions.
+.SH COMMANDS
+.I LOC
+is a number from
+.BR "wayweather list" ,
+a name, a city or
+.BR default .
+.TP
+.BR get " [" \-\-no\-icon "] [" \-l " \fILOC\fR] [" \-f ]
+Print one line of Waybar JSON. Use with Waybar's
+.BR interval .
+.TP
+.BR print " [" \-\-no\-icon "] [" \-l " \fILOC\fR] [" \-f ]
+Show a detailed report with hourly and daily forecast.
+.TP
+.BR daemon " [" \-i " \fISECONDS\fR] [" \-\-no\-icon "] [" \-l " \fILOC\fR]"
+Stream Waybar JSON. Changes to the config file are shown immediately.
+SIGUSR1 refreshes, SIGUSR2 switches to the next location, SIGHUP reloads.
+.TP
+.B tui
+Interactive manager for saved locations, the current location, units
+and settings. Press
+.B ?
+inside for key bindings.
+.TP
+.BR search " \fIQUERY\fR [" \-n " \fIN\fR]"
+Search places by name. A comma narrows by region or country:
+.BR "wayweather search \(dqSpringfield, Illinois\(dq" .
+.TP
+.BR add " \fIQUERY\fR | " \-\-lat " \fIX\fR " \-\-lon " \fIY\fR [options]"
+Save a location found by
+.I QUERY
+or given by coordinates. Options:
+.BR \-\-pick " \fIN\fR, " \-\-name ", " \-\-city ", " \-\-region ,
+.BR \-\-country ", " \-\-units " metric|imperial, " \-\-default ", " \-\-use .
+.TP
+.BR list " [" \-\-json ]
+List saved locations. \(bu marks the one shown, \(** the default.
+.TP
+.BR remove " \fILOC\fR... [" \-y ]
+Delete saved locations.
+.TP
+.BR edit " \fILOC\fR [options]"
+Change name, place, coordinates or units of a saved location.
+.TP
+.BR use " \fILOC\fR | " geo
+Show a saved location (turns geolocation off) or switch back to
+geolocation.
+.TP
+.BR default " [\fILOC\fR | " \-\-clear ]
+Show or set the default location.
+.TP
+.BR next ", " prev
+Step through the saved locations (and geolocation, unless
+.B geolocation.include_in_cycle
+is false). Ideal for Waybar's
+.BR on\-click .
+.TP
+.BR set " " \-\-lat " \fIX\fR " \-\-lon " \fIY\fR [" \-\-save "] [options]"
+Set the current location manually.
+.TP
+.BR units " [metric|imperial] [" \-\-temp ", " \-\-wind ", " \-\-precip ", " \-\-pressure ", " \-\-clock "] [" \-l " \fILOC\fR]"
+Show or change the measurements of the current or a saved location.
+Values: celsius|fahrenheit, kmh|ms|mph|kn, mm|inch, hpa|inhg|mmhg|kpa,
+24h|12h.
+.TP
+.BR geo " [on|off|toggle|locate|save [\fINAME\fR]|provider auto|gpsd|geoclue|ip]"
+Control geolocation.
+.TP
+.B refresh
+Ask running daemons to refetch now.
+.TP
+.BR reset " [" \-\-units "] [" \-\-all "] [" \-y ]
+Clear the current location and enable geolocation;
+.B \-\-all
+restores every default and deletes saved locations.
+.TP
+.BR config " [path|show|edit|check]"
+Inspect the config file or open it in
+.BR $VISUAL / $EDITOR .
+.SH FORMAT PLACEHOLDERS
+.B display.text
+and
+.B display.tooltip_title
+accept:
+{icon} {temp} {feels} {tunit} {desc} {condition} {tmin} {tmax}
+{humidity} {dew} {precip} {punit} {precip_prob} {cloud} {wind} {gust}
+{wunit} {wind_dir} {wind_arrow} {wind_deg} {pressure} {presunit} {uv}
+{visibility} {sunrise} {sunset} {name} {city} {region} {country} {place}
+{lat} {lon} {time} {updated} {date} {source}.
+.PP
+Waybar output also contains
+.B alt
+(the condition) and CSS classes: the condition (clear, partly\-cloudy,
+cloudy, fog, drizzle, rain, freezing, snow, thunder), day/night, a
+temperature class (hot, warm, mild, cool, cold), and stale, geolocated or
+error when applicable.
+.SH FILES
+.TP
+.I $XDG_CONFIG_HOME/wayweather/config.json
+Configuration and saved locations. Older
+.I config.toml
+and
+.I locations.json
+files are migrated automatically.
+.TP
+.I $XDG_CACHE_HOME/wayweather/
+Weather, geolocation and place name caches.
+.SH GEOLOCATION
+The
+.B auto
+provider tries gpsd (localhost:2947), then GeoClue2 (if compiled in),
+then IP geolocation (ip\-api.com, ipwho.is). GeoClue may require
+allowing the desktop id
+.B wayweather
+in
+.IR /etc/geoclue/geoclue.conf .
+.SH EXAMPLES
+.nf
+wayweather add "Vienna" \-\-name Work \-\-default
+wayweather units imperial \-\-pressure hpa
+wayweather print \-l Work
+wayweather geo on
+.fi
+.SH AUTHOR
+Adam \(aqTheElevatedOne\(aq Mlad\('y
+.SH SEE ALSO
+.BR waybar (5)
+.PP
+https://github.com/TheElevatedOne/wayweather
+.PP
+Weather data by Open\-Meteo.com (CC BY 4.0).

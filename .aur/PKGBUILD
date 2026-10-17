@@ -1,38 +1,37 @@
 # Maintainer: Adam 'TheElevatedOne' Mladý <admin@elevated.ovh> -> https://github.com/TheElevatedOne
 
 pkgname=wayweather
-pkgver=2.1.3
+pkgver=3.0.0
 pkgrel=1
-pkgdesc="Custom Weather Script for Waybar with IP Geolocation"
-arch=('any')
+pkgdesc="Weather module for Waybar with saved locations, GPS/IP geolocation and a TUI"
+arch=('x86_64' 'aarch64')
 url="https://github.com/TheElevatedOne/wayweather"
-license=('GPL3')
-depends=('tombl-bin' 'gawk' 'curl' 'jq' 'bash')
-options=('!debug' '!strip')
-provides=(wayweather)
+license=('GPL-3.0-or-later')
+depends=('curl' 'cjson' 'ncurses' 'geoclue')
+makedepends=('git' 'pkgconf')
+optdepends=('gpsd: GPS receiver support'
+            'ttf-nerd-fonts-symbols: weather icons')
+provides=('wayweather')
+conflicts=('wayweather-git')
 source=("git+https://github.com/TheElevatedOne/wayweather.git#branch=main")
-sha256sums=("SKIP")
+sha256sums=('SKIP')
 
 pkgver() {
   cd wayweather
-  git describe --abbrev=0
-  cd ..
+  git describe --tags --abbrev=0 | sed 's/^v//'
+}
+
+build() {
+  cd wayweather
+  make GEOCLUE=1 VERSION="$pkgver"
+}
+
+check() {
+  cd wayweather
+  make check
 }
 
 package() {
-  set -e
   cd wayweather
-
-  # Install Main Executable
-  install -Dm755 wayweather "${pkgdir}/usr/bin/wayweather"
-
-  # Install Libraries
-  install -Dm755 src/config.sh "${pkgdir}/usr/lib/${pkgname}/config.sh"
-  install -Dm755 src/locations.sh "${pkgdir}/usr/lib/${pkgname}/locations.sh"
-  install -Dm755 src/meteo_api.sh "${pkgdir}/usr/lib/${pkgname}/meteo_api.sh"
-  install -Dm755 src/output.sh "${pkgdir}/usr/lib/${pkgname}/output.sh"
-  install -Dm755 src/version "${pkgdir}/usr/lib/${pkgname}/version"
-
-  # Export License
-  install -D LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+  make DESTDIR="$pkgdir" PREFIX=/usr DOCDIR=/usr/share/doc/wayweather install
 }

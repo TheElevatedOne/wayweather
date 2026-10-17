@@ -1,0 +1,89 @@
+#compdef wayweather
+# zsh completion for wayweather
+
+_wayweather_locations() {
+  local -a locs
+  locs=(${(f)"$(wayweather list --json 2>/dev/null | sed -n 's/^[[:space:]]*"id":[[:space:]]*\([0-9]*\).*/\1/p')"})
+  _describe -t locations 'saved location' locs
+  compadd default
+}
+
+_wayweather_units() {
+  _arguments \
+    '(-u --units)'{-u,--units}'[preset]:preset:(metric imperial)' \
+    '--temp[temperature unit]:unit:(celsius fahrenheit)' \
+    '--wind[wind speed unit]:unit:(kmh ms mph kn)' \
+    '--precip[precipitation unit]:unit:(mm inch)' \
+    '--pressure[pressure unit]:unit:(hpa inhg mmhg kpa)' \
+    '--clock[time format]:format:(24h 12h)' \
+    "$@"
+}
+
+_wayweather() {
+  local -a commands
+  commands=(
+    'get:print Waybar JSON once'
+    'print:detailed report in the terminal'
+    'daemon:stream Waybar JSON'
+    'tui:interactive manager'
+    'search:search places by name'
+    'add:save a new location'
+    'list:list saved locations'
+    'remove:delete saved locations'
+    'edit:change a saved location'
+    'use:show a saved location or geolocation'
+    'default:show or set the default location'
+    'next:switch to the next location'
+    'prev:switch to the previous location'
+    'set:set the current location manually'
+    'units:show or change measurements'
+    'geo:control geolocation'
+    'refresh:make daemons refetch now'
+    'reset:reset the current location'
+    'config:inspect or edit the config'
+    'help:show help'
+    'version:show version'
+  )
+
+  _arguments -C \
+    '(-c --config)'{-c,--config}'[config file]:file:_files' \
+    '--verbose[log progress]' \
+    '--no-color[disable colors]' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '(-v --version)'{-v,--version}'[show version]' \
+    '1:command:->command' \
+    '*::arg:->args'
+
+  case $state in
+    command) _describe -t commands 'wayweather command' commands ;;
+    args)
+      case $words[1] in
+        get|print) _arguments '--no-icon' '(-f --force)'{-f,--force} \
+          '(-l --location)'{-l,--location}'[saved location]:location:_wayweather_locations' ;;
+        daemon) _arguments '(-i --interval)'{-i,--interval}'[seconds]:seconds:' '--no-icon' \
+          '(-l --location)'{-l,--location}'[saved location]:location:_wayweather_locations' ;;
+        search) _arguments '(-n --count)'{-n,--count}'[results]:count:' '*:query:' ;;
+        add) _arguments '(-p --pick)'{-p,--pick}'[result]:n:' '--lat:latitude:' '--lon:longitude:' \
+          '--city:city:' '--region:region:' '--country:country:' '(-N --name)'{-N,--name}'[label]:name:' \
+          '(-u --units)'{-u,--units}'[preset]:preset:(metric imperial)' '(-d --default)'{-d,--default} \
+          '--use' '*:query:' ;;
+        list) _arguments '--json' ;;
+        remove) _arguments '(-y --yes)'{-y,--yes} '*:location:_wayweather_locations' ;;
+        edit) _wayweather_units '1:location:_wayweather_locations' '(-N --name)'{-N,--name}'[label]:name:' \
+          '--city:city:' '--region:region:' '--country:country:' '--lat:latitude:' '--lon:longitude:' ;;
+        use) _alternative 'locations:location:_wayweather_locations' 'special:special:(geo)' ;;
+        default) _alternative 'locations:location:_wayweather_locations' 'special:special:(--clear)' ;;
+        set) _arguments '--lat:latitude:' '--lon:longitude:' '--city:city:' '--region:region:' \
+          '--country:country:' '(-N --name)'{-N,--name}'[label]:name:' \
+          '(-u --units)'{-u,--units}'[preset]:preset:(metric imperial)' '(-s --save)'{-s,--save} '--skip-config' ;;
+        units) _wayweather_units '(-l --location)'{-l,--location}'[saved location]:location:_wayweather_locations' \
+          '*:preset:(metric imperial)' ;;
+        geo) _arguments '1:action:(on off toggle locate save provider)' '2:provider:(auto gpsd geoclue ip)' ;;
+        reset) _arguments '(-u --units)'{-u,--units} '--all' '(-y --yes)'{-y,--yes} ;;
+        config) _arguments '1:action:(path show edit check)' ;;
+        help) _arguments "1:topic:(${commands%%:*} format)" ;;
+      esac ;;
+  esac
+}
+
+_wayweather "$@"

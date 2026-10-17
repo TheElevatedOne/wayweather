@@ -1,18 +1,21 @@
 pkgbase = wayweather
-	pkgdesc = Custom Weather Script for Waybar with IP Geolocation
-	pkgver = 2.1.3
+	pkgdesc = Weather module for Waybar with saved locations, GPS/IP geolocation and a TUI
+	pkgver = 3.0.0
 	pkgrel = 1
 	url = https://github.com/TheElevatedOne/wayweather
-	arch = any
-	license = GPL3
-	depends = tombl-bin
-	depends = gawk
+	arch = x86_64
+	arch = aarch64
+	license = GPL-3.0-or-later
+	makedepends = git
+	makedepends = pkgconf
 	depends = curl
-	depends = jq
-	depends = bash
+	depends = cjson
+	depends = ncurses
+	depends = geoclue
+	optdepends = gpsd: GPS receiver support
+	optdepends = ttf-nerd-fonts-symbols: weather icons
 	provides = wayweather
-	options = !debug
-	options = !strip
+	conflicts = wayweather-git
 	source = git+https://github.com/TheElevatedOne/wayweather.git#branch=main
 	sha256sums = SKIP
 
