@@ -19,6 +19,6 @@ pkgbase = wayweather
 	provides = libwayweather.so
 	conflicts = wayweather-git
 	source = wayweather-3.0.1.tar.gz::https://github.com/TheElevatedOne/wayweather/archive/refs/tags/3.0.1.tar.gz
-	sha256sums = SKIP
+	sha256sums = fac791accc8ad790ad78139be698b681f44e8909c816b0770a562b578a435109
 
 pkgname = wayweather
