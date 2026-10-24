@@ -63,6 +63,12 @@ static int end_edit(config_t *cfg, int lock, bool save) {
   return ok ? 0 : 1;
 }
 
+/* Releases the config without saving and reports failure */
+static int abort_edit(config_t *cfg, int lock) {
+  end_edit(cfg, lock, false);
+  return 1;
+}
+
 static int find_or_complain(const config_t *cfg, const char *ref) {
   int idx = config_find(cfg, ref);
   if (idx == -2)
@@ -237,12 +243,15 @@ static int cmd_show(int argc, char **argv, bool waybar) {
   } else {
     log_error("%s", err);
     if (waybar) {
+      /* Exit 0: Waybar hides custom modules whose command fails, and the
+       * error should stay visible in the bar */
       char *line = render_waybar_error(
           cfg.display.icons ? "\U000F0F2F" : "?", err);
       puts(line);
       free(line);
+    } else {
+      status = 1;
     }
-    status = 1;
   }
   config_free(&cfg);
   return status;
@@ -463,13 +472,13 @@ static int cmd_add(int argc, char **argv) {
       char desc[256];
       describe(&cfg.locations[i], desc, sizeof desc);
       log_error("Already saved as #%d: %s", i + 1, desc);
-      return end_edit(&cfg, lock, false) | 1;
+      return abort_edit(&cfg, lock);
     }
   }
   int idx = config_add(&cfg, &loc);
   if (idx < 0) {
     log_error("Too many saved locations (max %d)", MAX_LOCATIONS);
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   }
   if (use)
     config_use(&cfg, idx);
@@ -577,7 +586,7 @@ static int cmd_remove(int argc, char **argv) {
     idx[i] = find_or_complain(&cfg, argv[optind + i]);
     if (idx[i] < 0) {
       free(idx);
-      return end_edit(&cfg, lock, false) | 1;
+      return abort_edit(&cfg, lock);
     }
   }
   qsort(idx, (size_t)n, sizeof *idx, cmp_desc);
@@ -586,7 +595,7 @@ static int cmd_remove(int argc, char **argv) {
     if (!interactive()) {
       log_error("Refusing to delete without confirmation, pass --yes");
       free(idx);
-      return end_edit(&cfg, lock, false) | 1;
+      return abort_edit(&cfg, lock);
     }
     for (int i = 0; i < n; i++) {
       char desc[256];
@@ -675,7 +684,7 @@ static int cmd_edit(int argc, char **argv) {
     return 1;
   int idx = find_or_complain(&cfg, argv[optind]);
   if (idx < 0)
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
 
   location_t loc = cfg.locations[idx];
   bool coords = false, bad = !apply_units(opts, n, &loc.units);
@@ -688,7 +697,7 @@ static int cmd_edit(int argc, char **argv) {
   char err[128];
   if (!location_validate(&loc, err, sizeof err)) {
     log_error("%s", err);
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   }
   bool was_active = !cfg.geo.enabled && config_match_current(&cfg) == idx;
   cfg.locations[idx] = loc;
@@ -726,7 +735,7 @@ static int cmd_use(int argc, char **argv) {
   if (idx < 0) {
     if (str_ieq(argv[1], "default"))
       log_error("No default location set (\"wayweather default LOC\")");
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   }
   config_use(&cfg, idx);
   char desc[256];
@@ -762,7 +771,7 @@ static int cmd_default(int argc, char **argv) {
   }
   int idx = find_or_complain(&cfg, argv[1]);
   if (idx < 0)
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   config_set_default(&cfg, idx);
   char desc[256];
   describe(&cfg.locations[idx], desc, sizeof desc);
@@ -781,7 +790,8 @@ static int cmd_cycle(int direction) {
     printf("Now showing: %s\n", desc);
   else
     log_error("%s", desc);
-  return end_edit(&cfg, lock, ok) | (ok ? 0 : 1);
+  int rc = end_edit(&cfg, lock, ok);
+  return ok ? rc : 1;
 }
 
 /* ---------- set / units ---------- */
@@ -798,19 +808,21 @@ static int cmd_set(int argc, char **argv) {
   int lock;
   if (!begin_edit(&cfg, &lock))
     return 1;
-  location_t loc = cfg.current;
-  loc.name[0] = '\0';
+  /* A new place starts blank; only the units carry over */
+  location_t place;
+  location_init(&place);
+  units_t units = cfg.current.units;
   bool coords = false, bad = false, save = false, skip = false;
   bool units_only = true;
   int c;
   while ((c = getopt_long(argc, argv, "N:u:sh", opts, NULL)) != -1) {
-    if (place_option(c, optarg, &loc, &coords, &bad)) {
+    if (place_option(c, optarg, &place, &coords, &bad)) {
       units_only = false;
       continue;
     }
     switch (c) {
     case 'u':
-      if (!units_from_preset(optarg, &loc.units))
+      if (!units_from_preset(optarg, &units))
         bad = true;
       break;
     case 's':
@@ -840,10 +852,12 @@ static int cmd_set(int argc, char **argv) {
     return usage_error("set", "A new location needs --lat and --lon "
                               "(or use \"wayweather add <city> --use\")");
   }
+  location_t loc = units_only ? cfg.current : place;
+  loc.units = units;
   char err[128];
   if (!units_only && !location_validate(&loc, err, sizeof err)) {
     log_error("%s", err);
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   }
 
   if (save) {
@@ -857,11 +871,14 @@ static int cmd_set(int argc, char **argv) {
     if (!units_only) {
       cfg.geo.enabled = false;
       cfg.active = config_match_current(&cfg);
+    } else if (!cfg.geo.enabled && config_match_current(&cfg) >= 0) {
+      /* Keep the saved twin of the current location consistent */
+      cfg.locations[config_match_current(&cfg)].units = loc.units;
     }
-    char desc[256], units[64];
+    char desc[256], udesc[64];
     describe(&loc, desc, sizeof desc);
-    units_describe(&loc.units, units, sizeof units);
-    printf("Current location: %s [%s]\n", desc, units);
+    units_describe(&loc.units, udesc, sizeof udesc);
+    printf("Current location: %s [%s]\n", desc, udesc);
   }
   return end_edit(&cfg, lock, true);
 }
@@ -891,7 +908,7 @@ static int cmd_units(int argc, char **argv) {
     return 1;
   int idx = -1;
   if (ref && (idx = find_or_complain(&cfg, ref)) < 0)
-    return end_edit(&cfg, lock, false) | 1;
+    return abort_edit(&cfg, lock);
   units_t *u = idx >= 0 ? &cfg.locations[idx].units : &cfg.current.units;
 
   /* Positional presets first, then -u presets, then single units */
@@ -976,7 +993,7 @@ static int cmd_geo(int argc, char **argv) {
     if (!geolocate(&cfg.geo, true, &loc, source, sizeof source, err,
                    sizeof err)) {
       log_error("%s", err);
-      return end_edit(&cfg, lock, false) | 1;
+      return abort_edit(&cfg, lock);
     }
     char place[512];
     location_place(&loc, place, sizeof place);
@@ -990,7 +1007,7 @@ static int cmd_geo(int argc, char **argv) {
     int idx = config_add(&cfg, &loc);
     if (idx < 0) {
       log_error("Too many saved locations");
-      return end_edit(&cfg, lock, false) | 1;
+      return abort_edit(&cfg, lock);
     }
     printf("Saved as #%d\n", idx + 1);
     return end_edit(&cfg, lock, true);

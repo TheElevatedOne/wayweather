@@ -461,14 +461,11 @@ bool config_save(const config_t *cfg) {
 }
 
 int config_lock(void) {
-  char *path = xasprintf("%s.lock", config_path());
-  char dir[PATH_MAX];
-  str_copy(dir, path, sizeof dir);
-  char *slash = strrchr(dir, '/');
-  if (slash) {
-    *slash = '\0';
-    mkdir_p(dir, 0700);
-  }
+  /* Lives in the runtime dir so it doesn't clutter ~/.config */
+  char *dir = xasprintf("%s/wayweather", xdg_runtime_dir());
+  mkdir_p(dir, 0700);
+  char *path = xasprintf("%s/config.lock", dir);
+  free(dir);
   int fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
   free(path);
   if (fd >= 0 && flock(fd, LOCK_EX) != 0) {

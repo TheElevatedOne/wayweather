@@ -15,6 +15,8 @@ powered by [Open-Meteo](https://open-meteo.com) (no API key needed).
   offline from its cache, and reacts to clicks (`next` / `prev` / `refresh`)
 - Bar text you can template, CSS classes per condition, day/night and
   temperature
+- **libwayweather**: the weather, place search and geolocation as a C
+  library (`wayweather.h`, `.so` + `.a`, pkg-config) for your own programs
 - Completions for bash, zsh and fish, a man page, and automatic migration of
   2.x configs
 
@@ -28,6 +30,7 @@ powered by [Open-Meteo](https://open-meteo.com) (no API key needed).
 - [**TUI**](#tui)
 - [**Config**](#config)
 - [**Geolocation**](#geolocation)
+- [**C library**](#c-library)
 
 ## Installation
 
@@ -47,22 +50,23 @@ the icons.
    ```sh
    git clone https://github.com/TheElevatedOne/wayweather.git
    cd wayweather
-   make                 # -> dist/wayweather
-   make check           # offline smoke tests
+   make                 # -> dist/wayweather, dist/libwayweather.{so,a}
+   make check           # offline CLI and library tests
    sudo make install    # or: make install-user  (~/.local)
    ```
 
    | Target                        | What it does                                   |
    | ----------------------------- | ---------------------------------------------- |
-   | `make` / `make release`       | optimised binary in `dist/`                    |
+   | `make` / `make release`       | binary and libraries in `dist/`                |
+   | `make lib`                    | only `libwayweather.so` / `.a`                 |
    | `make debug`                  | ASan/UBSan build in `build/debug/`             |
    | `make install` / `uninstall`  | honours `PREFIX` (default `/usr/local`) and `DESTDIR` |
-   | `make package`                | release tarball in `dist/`                     |
+   | `make package`                | release tarball (binary, libraries, header)    |
    | `make clean` / `distclean`    | remove `build/` (and `dist/`)                  |
    | `GEOCLUE=0`                   | build without GeoClue (auto-detected)          |
 
 Sources live in `src/`, objects and dependency files in `build/`, and the
-release binary goes to `dist/`.
+binary and libraries go to `dist/`. The version comes from `VERSION`.
 
 ## Waybar module
 
@@ -86,7 +90,9 @@ seconds. When the network is down it keeps showing cached data, adds the
 
 To poll instead, use `"exec": "wayweather get"` with `"interval": 900`.
 
-Example config and CSS: [`data/waybar/`](data/waybar). Classes on every
+Example config and CSS: [`data/waybar/`](data/waybar). The CSS uses your
+theme's named colours (pywal's `@foreground`, `@color1`, …) rather than
+fixed ones. Classes on every
 update:
 
 | Kind        | Classes                                                                 |
@@ -243,6 +249,57 @@ result afterwards.
 
 Units always come from the current location. If geolocation fails, Waybar
 falls back to the configured location.
+
+## C library
+
+`libwayweather` exposes the weather, place search and geolocation used by
+the binary. It is installed with the binary (`/usr/include/wayweather.h`,
+`libwayweather.so`, `libwayweather.a`, `wayweather.pc`) and only needs
+libcurl, cJSON and (optionally) GeoClue, not ncurses. Only the `ww_*`
+functions are exported; the library is thread-safe after `ww_init()` and
+always uses `.` as the decimal separator, whatever your locale.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <wayweather.h>
+
+int main(void) {
+  ww_init();
+
+  ww_location places[5];
+  char err[256];
+  int n = ww_geocode("Vienna", places, 5, err, sizeof err);
+  if (n <= 0) {
+    fprintf(stderr, "%s\n", err);
+    return 1;
+  }
+
+  ww_weather w;
+  if (ww_weather_for(&places[0], 600, &w, err, sizeof err) == 0) {
+    char *text = ww_format("{icon} {temp}{tunit} {desc}", &places[0], &w, 1, 1);
+    printf("%s, tomorrow %.0f°\n", text, w.days[1].temp_max);
+    free(text);
+  }
+
+  /* Exactly what `wayweather get` prints, from the user's config */
+  char *json = ww_waybar_json(NULL);
+  puts(json);
+  free(json);
+
+  ww_cleanup();
+  return 0;
+}
+```
+
+```sh
+cc demo.c $(pkg-config --cflags --libs wayweather) -o demo
+```
+
+The header documents every function: units and labels, `ww_geocode`,
+`ww_reverse_geocode`, `ww_geolocate` (gpsd / GeoClue / IP),
+`ww_current_location`, `ww_saved_locations`, `ww_weather_get`, WMO code
+helpers, `ww_format` and `ww_waybar_json`.
 
 ---
 

@@ -81,8 +81,11 @@ static bool emit(const char *line) {
 }
 
 static int inotify_setup(char *basename, size_t size) {
+  /* Watch the real file: a symlinked config (dotfile managers) is written
+   * through to its target, so events happen in the target's directory */
   char dir[PATH_MAX];
-  str_copy(dir, config_path(), sizeof dir);
+  if (!realpath(config_path(), dir))
+    str_copy(dir, config_path(), sizeof dir);
   char *slash = strrchr(dir, '/');
   if (!slash)
     return -1;
@@ -140,13 +143,13 @@ int daemon_run(const daemon_opts *opts) {
   signal(SIGPIPE, SIG_IGN);
   int sfd = signalfd(-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
 
+  /* Load first: it creates the config directory that inotify watches */
+  config_t cfg;
+  bool have_cfg = config_load(&cfg);
   char basename[NAME_MAX + 1];
   int ifd = inotify_setup(basename, sizeof basename);
   registry_add();
   atexit(registry_remove);
-
-  config_t cfg;
-  bool have_cfg = config_load(&cfg);
   bool force = false;
   int failures = 0;
   char *last = NULL;
@@ -157,8 +160,9 @@ int daemon_run(const daemon_opts *opts) {
     int wait_s = interval;
 
     if (!have_cfg) {
-      char *line = render_waybar_error("", "wayweather: config file is "
-                                           "invalid, see the log");
+      char *line = render_waybar_error("?", "wayweather: the config file is "
+                                            "invalid, run \"wayweather config "
+                                            "check\"");
       if (!emit(line)) {
         free(line);
         break;

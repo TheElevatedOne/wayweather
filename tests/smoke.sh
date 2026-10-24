@@ -45,7 +45,7 @@ check "add imperial"            ww add --lat 40.7128 --lon -74.006 --city "New Y
 check "duplicate is rejected"   fails ww add --lat 48.1486 --lon 17.1077 --city Again
 check "bad latitude rejected"   fails ww add --lat 123 --lon 0 --city Nowhere
 check "list shows 3"            contains "New York" ww list
-check "list --json is JSON"     sh -c "\"$BIN\" -c \"$CFG\" list --json | python3 -c 'import json,sys; assert len(json.load(sys.stdin)) == 3'"
+check "list --json has 3 ids"   sh -c "[ \$(\"$BIN\" -c \"$CFG\" list --json | grep -c '\"id\":') -eq 3 ]"
 
 check "use by name"             contains "Now showing: Work" ww use work
 check "next cycles"             contains "New York" ww next

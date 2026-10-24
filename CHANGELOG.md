@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## wayweather 3.0.1
+
+- New: libwayweather, a C library with the public header `wayweather.h`
+  (shared + static library and pkg-config file) for weather, place search,
+  geolocation, formatting and Waybar JSON in other programs
+- Fix: `wayweather get` exits 0 when it prints an error line, so Waybar no
+  longer hides the module on network errors
+- Fix: the daemon picks up config changes on the very first run (the
+  config directory now exists before it is watched)
+- Fix: a symlinked `config.json` (dotfile managers) stays a symlink; writes
+  go to its target and the daemon watches the target
+- Fix: `set --lat/--lon` no longer keeps the old city, region and country;
+  `set --units` keeps the location's name and syncs its saved twin
+- Fix: TUI hang when an error message didn't fit a very narrow pane
+- Fix: wind direction is "-" instead of undefined behaviour when the API
+  omits it; negative angles are handled
+- Fix: cache files written from two threads can't collide
+- The config lock file moved from `~/.config/wayweather` to
+  `$XDG_RUNTIME_DIR/wayweather`
+- TUI boxes have square corners
+- Example Waybar CSS uses the theme's named (pywal) colours
+- `make check` no longer needs Python and also tests the library
+- Packaging: `VERSION` file, AUR files moved to `aur/wayweather`, the AUR
+  package builds from the release tarball, GitHub Actions builds releases
+
 ## wayweather 3.0.0
 
 Complete rewrite in C.
