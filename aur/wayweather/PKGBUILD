@@ -1,0 +1,32 @@
+# Maintainer: Adam 'TheElevatedOne' Mladý <admin@elevated.ovh> -> https://github.com/TheElevatedOne
+
+pkgname=wayweather
+pkgver=3.0.1
+pkgrel=1
+pkgdesc="Weather module for Waybar with saved locations, GPS/IP geolocation, a TUI and a C library"
+arch=('x86_64' 'aarch64')
+url="https://github.com/TheElevatedOne/wayweather"
+license=('GPL-3.0-or-later')
+depends=('glibc' 'curl' 'cjson' 'ncurses' 'geoclue' 'glib2')
+makedepends=('pkgconf')
+optdepends=('gpsd: GPS receiver support'
+            'ttf-nerd-fonts-symbols: weather icons')
+provides=("wayweather=${pkgver}" 'libwayweather.so')
+conflicts=('wayweather-git')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/TheElevatedOne/wayweather/archive/refs/tags/${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  make PREFIX=/usr GEOCLUE=1 VERSION="${pkgver}" release
+}
+
+check() {
+  cd "${pkgname}-${pkgver}"
+  make GEOCLUE=1 VERSION="${pkgver}" check
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+  make PREFIX=/usr GEOCLUE=1 VERSION="${pkgver}" DESTDIR="${pkgdir}" install
+}

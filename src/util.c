@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -350,6 +351,12 @@ char *read_file(const char *path, size_t *len) {
 }
 
 bool write_file_atomic(const char *path, const char *data, size_t len) {
+  /* Replacing a symlink would break dotfile managers: write its target */
+  char real[PATH_MAX];
+  struct stat st;
+  if (lstat(path, &st) == 0 && S_ISLNK(st.st_mode) && realpath(path, real))
+    path = real;
+
   char dir[PATH_MAX];
   str_copy(dir, path, sizeof dir);
   char *slash = strrchr(dir, '/');
@@ -361,7 +368,10 @@ bool write_file_atomic(const char *path, const char *data, size_t len) {
     }
   }
 
-  char *tmp = xasprintf("%s.tmp.%d", path, (int)getpid());
+  /* Unique per process and thread (the TUI writes caches from a worker) */
+  static atomic_uint counter;
+  char *tmp = xasprintf("%s.tmp.%d.%u", path, (int)getpid(),
+                        atomic_fetch_add(&counter, 1));
   FILE *f = fopen(tmp, "wb");
   if (!f) {
     log_error("Cannot write %s: %s", tmp, strerror(errno));

@@ -1,0 +1,58 @@
+name: Build And Release
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    # Arch, so the binary links against Arch's curl, cjson, ncurses, geoclue
+    container:
+      image: archlinux:base-devel
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Install dependencies
+      run: pacman -Syu --noconfirm --needed git curl cjson ncurses geoclue glib2 pkgconf
+
+    - name: Check-out repository
+      uses: actions/checkout@v4
+
+    - name: Read VERSION file
+      id: getversion
+      run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+    - name: Build
+      run: make GEOCLUE=1 VERSION=${{ steps.getversion.outputs.version }}
+
+    - name: Test
+      run: make GEOCLUE=1 VERSION=${{ steps.getversion.outputs.version }} check
+
+    - name: Package
+      run: make GEOCLUE=1 VERSION=${{ steps.getversion.outputs.version }} package
+
+    - name: Release notes from CHANGELOG.md
+      run: |
+        awk -v v="## wayweather ${{ steps.getversion.outputs.version }}" \
+          '$0 == v {found=1; next} found && /^## / {exit} found' CHANGELOG.md > release-notes.md
+        cat release-notes.md
+
+    - name: Create Github Release
+      uses: ncipollo/release-action@v1.20.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        artifacts: dist/wayweather-${{ steps.getversion.outputs.version }}.tar.gz
+        replacesArtifacts: false
+        name: v${{ steps.getversion.outputs.version }} - wayweather
+        allowUpdates: true
+        tag: ${{ steps.getversion.outputs.version }}
+        commit: ${{ github.sha }}
+        bodyFile: release-notes.md

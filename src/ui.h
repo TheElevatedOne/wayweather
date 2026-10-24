@@ -43,7 +43,7 @@ void ui_put_right(WINDOW *win, int y, int right, attr_t attr,
                   const char *text);
 /* Fills a row with spaces using `attr` */
 void ui_fill(WINDOW *win, int y, int x, int width, attr_t attr);
-/* Rounded Unicode box (falls back to ASCII outside UTF-8 locales) */
+/* Square Unicode box (falls back to ASCII outside UTF-8 locales) */
 void ui_box(WINDOW *win, int y, int x, int h, int w, attr_t attr);
 /* Horizontal rule inside a box, joined to its borders */
 void ui_rule(WINDOW *win, int y, int x, int w, attr_t attr);

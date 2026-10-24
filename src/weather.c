@@ -98,7 +98,11 @@ const char *wmo_class(int code) {
 const char *wind_compass(double deg) {
   static const char *const names[] = {"N", "NE", "E", "SE",
                                       "S", "SW", "W", "NW"};
-  int idx = (int)floor(fmod(deg + 22.5, 360.0) / 45.0);
+  if (!isfinite(deg))
+    return "-";
+  /* fmod keeps the sign: shift negative angles into 0..360 first */
+  double d = fmod(fmod(deg, 360.0) + 360.0 + 22.5, 360.0);
+  int idx = (int)(d / 45.0);
   return names[CLAMP(idx, 0, 7)];
 }
 
@@ -107,7 +111,10 @@ const char *wind_arrow(double deg) {
    * the arrow shows where it blows TO. */
   static const char *const arrows[] = {"↓", "↙", "←", "↖",
                                        "↑", "↗", "→", "↘"};
-  int idx = (int)floor(fmod(deg + 22.5, 360.0) / 45.0);
+  if (!isfinite(deg))
+    return "";
+  double d = fmod(fmod(deg, 360.0) + 360.0 + 22.5, 360.0);
+  int idx = (int)(d / 45.0);
   return arrows[CLAMP(idx, 0, 7)];
 }
 

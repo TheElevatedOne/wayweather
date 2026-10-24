@@ -136,10 +136,10 @@ void ui_box(WINDOW *win, int y, int x, int h, int w, attr_t attr) {
     put_glyph(win, y + i, x, L"│", '|', attr);
     put_glyph(win, y + i, x + w - 1, L"│", '|', attr);
   }
-  put_glyph(win, y, x, L"╭", '+', attr);
-  put_glyph(win, y, x + w - 1, L"╮", '+', attr);
-  put_glyph(win, y + h - 1, x, L"╰", '+', attr);
-  put_glyph(win, y + h - 1, x + w - 1, L"╯", '+', attr);
+  put_glyph(win, y, x, L"┌", '+', attr);
+  put_glyph(win, y, x + w - 1, L"┐", '+', attr);
+  put_glyph(win, y + h - 1, x, L"└", '+', attr);
+  put_glyph(win, y + h - 1, x + w - 1, L"┘", '+', attr);
 }
 
 void ui_rule(WINDOW *win, int y, int x, int w, attr_t attr) {
@@ -336,6 +336,10 @@ static char **wrap_text(const char *text, int width, int *count) {
     const char *p = strcmp(para, "\x01") == 0 ? "" : para;
     do {
       size_t fit = utf8_fit(p, width);
+      if (fit == 0) { /* always make progress, even if nothing fits */
+        int len = mblen(p, MB_CUR_MAX);
+        fit = len > 0 ? (size_t)len : 1;
+      }
       size_t cut = fit;
       if (p[fit]) {
         size_t sp = fit;

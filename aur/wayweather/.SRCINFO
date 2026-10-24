@@ -1,22 +1,24 @@
 pkgbase = wayweather
-	pkgdesc = Weather module for Waybar with saved locations, GPS/IP geolocation and a TUI
-	pkgver = 3.0.0
+	pkgdesc = Weather module for Waybar with saved locations, GPS/IP geolocation, a TUI and a C library
+	pkgver = 3.0.1
 	pkgrel = 1
 	url = https://github.com/TheElevatedOne/wayweather
 	arch = x86_64
 	arch = aarch64
 	license = GPL-3.0-or-later
-	makedepends = git
 	makedepends = pkgconf
+	depends = glibc
 	depends = curl
 	depends = cjson
 	depends = ncurses
 	depends = geoclue
+	depends = glib2
 	optdepends = gpsd: GPS receiver support
 	optdepends = ttf-nerd-fonts-symbols: weather icons
-	provides = wayweather
+	provides = wayweather=3.0.1
+	provides = libwayweather.so
 	conflicts = wayweather-git
-	source = git+https://github.com/TheElevatedOne/wayweather.git#branch=main
+	source = wayweather-3.0.1.tar.gz::https://github.com/TheElevatedOne/wayweather/archive/refs/tags/3.0.1.tar.gz
 	sha256sums = SKIP
 
 pkgname = wayweather

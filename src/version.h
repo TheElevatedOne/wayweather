@@ -3,7 +3,7 @@
 
 /* The Makefile passes -DWW_VERSION from its VERSION variable */
 #ifndef WW_VERSION
-#define WW_VERSION "3.0.0"
+#define WW_VERSION "3.0.1"
 #endif
 
 #define WW_URL "https://github.com/TheElevatedOne/wayweather"

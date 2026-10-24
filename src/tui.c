@@ -443,6 +443,8 @@ static int draw_weather(const tui_state *t, const preview *p, int y, int x,
       const char *e = p->err;
       while (*e && y < bottom && n++ < 3) {
         size_t fit = utf8_fit(e, w);
+        if (fit == 0)
+          break; /* pane narrower than one character */
         char line[512];
         str_copy(line, e, fit + 1 < sizeof line ? fit + 1 : sizeof line);
         ui_put(stdscr, y++, x, w, COLOR_PAIR(CP_ERROR), line);
@@ -705,11 +707,9 @@ static void draw_locations(tui_state *t) {
       snprintf(ubuf, sizeof ubuf, "%s (%s)", units,
                units_preset_name(&l->units));
       y = kv(y, x, w, "Units", 0, ubuf);
-      char flags[128] = "";
-      if (l->is_default)
-        strcat(flags, "★ default  ");
-      if (idx == shown)
-        strcat(flags, "● shown in Waybar");
+      char flags[128];
+      snprintf(flags, sizeof flags, "%s%s", l->is_default ? "★ default  " : "",
+               idx == shown ? "● shown in Waybar" : "");
       if (flags[0])
         y = kv(y, x, w, "Status", COLOR_PAIR(CP_OK) | A_BOLD, flags);
       ui_rule(stdscr, y++, dx, dw, COLOR_PAIR(CP_BORDER));
@@ -1964,6 +1964,10 @@ int tui_run(void) {
 
   log_capture(true);
   ui_init();
+  /* Resolve the lazily cached XDG paths before a second thread exists */
+  xdg_config_dir();
+  xdg_cache_dir();
+  xdg_runtime_dir();
   preview_start(&t.cfg);
   timeout(250);
   if (t.cfg.n_locations == 0 && !app_location_set(&t.cfg.current))
