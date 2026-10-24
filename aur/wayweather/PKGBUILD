@@ -14,7 +14,7 @@ optdepends=('gpsd: GPS receiver support'
 provides=("wayweather=${pkgver}" 'libwayweather.so')
 conflicts=('wayweather-git')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/TheElevatedOne/wayweather/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('fac791accc8ad790ad78139be698b681f44e8909c816b0770a562b578a435109')
 
 build() {
   cd "${pkgname}-${pkgver}"
