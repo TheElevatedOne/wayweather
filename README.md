@@ -20,7 +20,8 @@ powered by [Open-Meteo](https://open-meteo.com) (no API key needed).
 - Completions for bash, zsh and fish, a man page, and automatic migration of
   2.x configs
 
-[![AUR Version](https://img.shields.io/aur/version/wayweather?style=for-the-badge&logo=archlinux)](https://aur.archlinux.org/packages/wayweather)
+[![AUR Version](https://img.shields.io/aur/version/wayweather-git?style=for-the-badge&logo=archlinux&label=wayweather-git)](https://aur.archlinux.org/packages/wayweather-git)
+[![AUR Version](https://img.shields.io/aur/version/wayweather-bin?style=for-the-badge&logo=archlinux&label=wayweather-bin)](https://aur.archlinux.org/packages/wayweather-bin)
 
 ## Sections
 
